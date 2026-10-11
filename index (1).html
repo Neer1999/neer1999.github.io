@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Økonomi</title>
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --surface2:#f0eee8; --border:#e2dfd6; --text:#1d1f1e; --text2:#55595a; --text3:#8a8e8c;
+  --accent:#1f6f5c; --accent-soft:#e1efe9; --warn:#a8650f; --warn-soft:#fbf0dc; --bad:#b03a3a; --bad-soft:#f8e3e1; --good:#2f7d4f;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04);
+  --r:10px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141615; --surface:#1c1f1e; --surface2:#252928; --border:#323735; --text:#e8eae8; --text2:#b0b5b3; --text3:#7d8381;
+  --accent:#5cc2a3; --accent-soft:#1d3a32; --warn:#e2a54b; --warn-soft:#3a2e1a; --bad:#ec7c7c; --bad-soft:#3d2222; --good:#6fcf97;
+  --shadow:none;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.num,td.n,.tile b{font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:16px}
+.hidden{display:none!important}
+/* header */
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+header h1{font-size:1.25rem;margin:0;letter-spacing:-.01em}
+#sync{font-size:.8rem;color:var(--text3);margin-left:auto;display:flex;align-items:center;gap:6px}
+#sync .dot{width:8px;height:8px;border-radius:50%;background:var(--text3)}
+#sync.ok .dot{background:var(--good)} #sync.busy .dot{background:var(--warn)} #sync.err .dot{background:var(--bad)} #sync.err{color:var(--bad)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px;border-bottom:1px solid var(--border)}
+nav.tabs button{flex:none;background:none;border:0;padding:10px 12px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs button.on{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+/* generic */
+.btn{border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--text3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){.btn.primary{color:#0d1b17}}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:.85rem}
+.btn.ghost{border-color:transparent;background:none}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+.card h2{font-size:1rem;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.card h2 .sp{flex:1}
+.muted{color:var(--text3)} .small{font-size:.85rem}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow)}
+.tile span{display:block;font-size:.8rem;color:var(--text3)}
+.tile b{display:block;font-size:1.35rem;margin-top:2px;letter-spacing:-.01em}
+.tile small{color:var(--text3);font-size:.78rem}
+.tile.warn{border-color:var(--warn);background:var(--warn-soft)} .tile.bad{border-color:var(--bad);background:var(--bad-soft)}
+.alert{border-radius:8px;padding:10px 12px;margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.92rem}
+.alert.warn{background:var(--warn-soft);color:var(--text)} .alert.bad{background:var(--bad-soft)} .alert.info{background:var(--accent-soft)}
+.alert .sp{flex:1;min-width:180px}
+.bar{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:20px;background:var(--surface2);color:var(--text2);font-weight:500;vertical-align:middle}
+.badge.good{background:var(--accent-soft);color:var(--accent)} .badge.warn{background:var(--warn-soft);color:var(--warn)} .badge.bad{background:var(--bad-soft);color:var(--bad)}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
+/* tables */
+table{width:100%;border-collapse:separate;border-spacing:0}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--surface2);vertical-align:middle}
+th{font-size:.78rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.sum td{font-weight:600;border-bottom:0}
+td .note{display:block;font-size:.78rem;color:var(--text3)}
+input[type=text],input[type=password],input[type=number],input[type=month],select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 9px;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+input.amt{text-align:right;font-variant-numeric:tabular-nums}
+label.f{display:block;margin-bottom:10px} label.f>span{display:block;font-size:.82rem;color:var(--text2);margin-bottom:3px}
+.chk{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;vertical-align:middle}
+/* budget */
+.bsec{margin-bottom:6px}
+.bsec h3{font-size:.85rem;margin:14px 0 4px;display:flex;justify-content:space-between;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.btable td{padding:6px 4px}
+.btable td.c{width:28px}
+.btable td.del{width:34px;text-align:right}
+.btable.edit td{border-bottom:0;padding:3px 3px}
+.btable.edit{table-layout:fixed}
+.btable.edit td.amt{width:130px}
+.btable.edit td.pot{width:150px}
+.monthnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.monthnav b{min-width:140px;text-align:center;font-size:1.05rem}
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2);margin:10px 0 6px}
+.stack i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8rem;color:var(--text2)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.sumgrid div{background:var(--surface2);border-radius:8px;padding:8px 10px}
+.sumgrid span{display:block;font-size:.75rem;color:var(--text3)}
+.sumgrid b{font-variant-numeric:tabular-nums}
+.left0{background:var(--accent-soft)!important} .leftpos{background:var(--warn-soft)!important} .leftneg{background:var(--bad-soft)!important}
+/* pots */
+.pots{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.pot{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.pot .top{display:flex;align-items:center;gap:8px}
+.pot .top b{font-size:1.02rem}
+.pot .bal{font-size:1.3rem;font-weight:600;font-variant-numeric:tabular-nums}
+.pot .meta{font-size:.84rem;color:var(--text2)}
+.pot .acts{display:flex;gap:6px;margin-top:auto;padding-top:4px;flex-wrap:wrap}
+.potmini{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--surface2)}
+.potmini:last-child{border-bottom:0}
+.potmini .bar{grid-column:1/-1}
+/* chart */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart .tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.8rem;box-shadow:0 4px 16px rgba(0,0,0,.12);white-space:nowrap;z-index:2}
+.chart .tip div{display:flex;gap:8px;align-items:center;justify-content:space-between}
+/* lock screen */
+#lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+#lock .box{width:100%;max-width:380px}
+#lock h1{font-size:1.4rem;margin:0 0 4px}
+#lock .err{color:var(--bad);font-size:.88rem;min-height:1.2em;margin:6px 0}
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px 16px;z-index:50;overflow:auto}
+#modal .box{background:var(--surface);border-radius:12px;width:100%;max-width:520px;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+#modal h3{margin:0 0 12px;font-size:1.1rem}
+#modal .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media (max-width:560px){
+  .wrap{padding:12px}
+  .f2{grid-template-columns:1fr}
+  .btable.edit td.pot{width:96px}
+  .btable.edit td.amt{width:92px}
+  .btable.edit td.del{width:30px}
+  .hide-sm{display:none}
+  nav.tabs button{padding:8px 9px}
+}
+</style>
+</head>
+<body>
+
+<!-- Låseskjerm: ingen data finnes i denne filen. Alt hentes kryptert og dekrypteres med passordet. -->
+<div id="lock">
+  <div class="box card">
+    <div id="lock-unlock" class="hidden">
+      <h1>Økonomi</h1>
+      <p class="muted small" style="margin-top:0">Skriv passordet for å låse opp.</p>
+      <label class="f"><span>Passord</span><input type="password" id="pw" autocomplete="current-password"></label>
+      <div class="err" id="pw-err"></div>
+      <button class="btn primary" id="btn-unlock" style="width:100%">Lås opp</button>
+      <p class="small muted" style="margin-bottom:0">Data er kryptert med AES-256. Uten passordet kan ingen lese den, heller ikke oss.</p>
+    </div>
+    <div id="lock-setup" class="hidden">
+      <h1>Førstegangsoppsett</h1>
+      <p class="muted small" style="margin-top:0">Velg et passord som dere begge husker. Bruk gjerne en setning med fire til fem ord. Glemmer dere passordet kan dataene ikke gjenopprettes.</p>
+      <div class="alert warn small hidden" id="legacy-warn">Fant en ukryptert data.json i repoet. Den blir erstattet med en kryptert versjon, men husk å slette den gamle fra git-historikken (se README).</div>
+      <label class="f"><span>Passord (minst 12 tegn)</span><input type="password" id="pw1" autocomplete="new-password"></label>
+      <label class="f"><span>Gjenta passord</span><input type="password" id="pw2" autocomplete="new-password"></label>
+      <label class="f"><span>Startdata (valgfritt, f.eks. startdata-oktober.json eller en backup)</span><input type="file" id="seedfile" accept=".json,application/json"></label>
+      <label class="f"><span>GitHub-token (valgfritt, kan legges inn senere)</span><input type="password" id="tok0" placeholder="github_pat_..."></label>
+      <div class="err" id="setup-err"></div>
+      <button class="btn primary" id="btn-setup" style="width:100%">Opprett og krypter</button>
+    </div>
+    <div id="lock-loading"><p class="muted">Laster…</p></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="wrap">
+    <header>
+      <h1>Økonomi</h1>
+      <div id="sync"><span class="dot"></span><span id="sync-txt">Lokal</span></div>
+      <button class="btn sm" data-act="lock">Lås</button>
+    </header>
+    <nav class="tabs" id="tabs">
+      <button data-tab="oversikt" class="on">Oversikt</button>
+      <button data-tab="budsjett">Budsjett</button>
+      <button data-tab="mal">Sparemål</button>
+      <button data-tab="kontoer">Kontoer</button>
+      <button data-tab="innst">Innstillinger</button>
+    </nav>
+    <main id="view"></main>
+  </div>
+</div>
+
+<div id="modal" class="hidden"><div class="box" id="modal-box"></div></div>
+
+<script>
+'use strict';
+/* ============================================================
+   KONSTANTER OG HJELPERE
+   ============================================================ */
+const GH = { owner: 'PederMyhrer', repo: 'PederMyhrer.github.io', path: 'data.json', branch: 'main' };
+const LS = { vault: 'okonomi.vault.v2', token: 'okonomi.token.v2', sha: 'okonomi.sha.v2', tab: 'okonomi.tab' };
+const KDF_ITER = 600000;
+const MONTHS = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+const CATS = [
+  { id: 'inntekt',  label: 'Inntekter',          color: '#2f7d4f' },
+  { id: 'fast',     label: 'Faste kostnader',    color: '#6b7a8f' },
+  { id: 'variabel', label: 'Variable og fond',   color: '#c08a3e' },
+  { id: 'gjeld',    label: 'Gjeld og avdrag',    color: '#b5475b' },
+  { id: 'sparing',  label: 'Sparing til mål',    color: '#1f6f5c' },
+];
+const ACC_TYPES = {
+  sparing:     { label: 'Sparekonto',              pots: true,  asset: true },
+  bruk:        { label: 'Brukskonto',              pots: true,  asset: true },
+  bsu:         { label: 'BSU',                     pots: true,  asset: true },
+  investering: { label: 'Investering (fond/ASK)',  pots: true,  asset: true },
+  eiendel:     { label: 'Eiendel (bolig, bil)',    pots: false, asset: true },
+  gjeld:       { label: 'Gjeld (lån)',             pots: false, asset: false },
+};
+const POT_KINDS = { buffer: 'Buffer', mal: 'Sparemål', investering: 'Investering' };
+const COLORS = ['#2f7d6d','#3d6fb6','#c07a2c','#8a5bb5','#b5475b','#5a8f3a','#4a8a9e','#9a7b4f','#6b6fd0','#c25b8f'];
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const kr = n => Math.round(n || 0).toLocaleString('nb-NO') + ' kr';
+const krs = n => (n > 0 ? '+' : '') + kr(n);
+const numStr = n => (n ? Math.round(n).toLocaleString('nb-NO') : '');
+const parseNum = s => { const v = parseFloat(String(s ?? '').replace(/[\s  ]/g, '').replace('−', '-').replace(',', '.')); return isNaN(v) ? 0 : v; };
+const sum = (arr, f = x => x) => arr.reduce((a, x) => a + (f(x) || 0), 0);
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const ymNow = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const ymAdd = (ym, n) => { let [y, m] = ym.split('-').map(Number); m += n; y += Math.floor((m - 1) / 12); m = ((m - 1) % 12 + 12) % 12 + 1; return y + '-' + String(m).padStart(2, '0'); };
+const ymDiff = (a, b) => { const [ay, am] = a.split('-').map(Number), [by, bm] = b.split('-').map(Number); return (by - ay) * 12 + (bm - am); };
+const ymLabel = (ym, short) => { if (!ym) return ''; const [y, m] = ym.split('-').map(Number); const n = MONTHS[m - 1]; return short ? n.slice(0, 3) + ' ' + String(y).slice(2) : n[0].toUpperCase() + n.slice(1) + ' ' + y; };
+const dateNo = iso => iso ? new Date(iso).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+/* ============================================================
+   KRYPTERING (Web Crypto: PBKDF2-SHA256 600k -> AES-256-GCM)
+   ============================================================ */
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64e = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const keyCache = new Map();
+async function deriveKey(pw, saltB64, iter) {
+  const ck = saltB64 + ':' + iter + ':' + pw; // nøkkel per passord, ellers huskes en feil nøkkel
+  if (keyCache.has(ck)) return keyCache.get(ck);
+  const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64d(saltB64), iterations: iter, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  keyCache.set(ck, key);
+  return key;
+}
+const isEnvelope = x => x && x.app === 'okonomi' && typeof x.ct === 'string' && typeof x.salt === 'string';
+async function sealWith(key, saltB64, iter, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(obj))));
+  return { app: 'okonomi', v: 1, kdf: 'PBKDF2-SHA256', iter, salt: saltB64, iv: b64e(iv), ct: b64e(ct) };
+}
+async function openEnv(env, pw) {
+  const key = await deriveKey(pw, env.salt, env.iter || KDF_ITER);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(env.iv) }, key, b64d(env.ct));
+  return JSON.parse(dec.decode(pt));
+}
+
+/* ============================================================
+   SESJON OG LAGRING
+   ============================================================ */
+const S = {
+  pw: null, salt: null, iter: KDF_ITER, key: null,
+  state: null, token: null, sha: null,
+  dirty: false, pushTimer: null, localTimer: null, lockTimer: null,
+  tab: 'oversikt', budgetMonth: null, budgetEdit: false, horizon: 60,
+};
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+function lsJSON(k) { try { return JSON.parse(lsGet(k)); } catch (e) { return null; } }
+
+function setSync(cls, txt) { const el = $('#sync'); el.className = cls; $('#sync-txt').textContent = txt; }
+const timeNo = () => new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+
+async function useSalt(salt, iter) { S.salt = salt; S.iter = iter || KDF_ITER; S.key = await deriveKey(S.pw, S.salt, S.iter); }
+
+/** Kalles etter hver endring. Lagrer kryptert lokalt og pusher til GitHub etter litt ro. */
+function changed(opts = {}) {
+  S.state.savedAt = new Date().toISOString();
+  S.dirty = true;
+  clearTimeout(S.localTimer);
+  S.localTimer = setTimeout(saveLocal, 250);
+  if (S.token) { clearTimeout(S.pushTimer); S.pushTimer = setTimeout(push, opts.now ? 50 : 3000); setSync('busy', 'Endringer venter'); }
+  else setSync('', 'Lagret lokalt');
+  if (!opts.noRender) render();
+}
+async function saveLocal() {
+  const env = await sealWith(S.key, S.salt, S.iter, S.state);
+  lsSet(LS.vault, JSON.stringify(env));
+  return env;
+}
+async function saveToken() {
+  if (!S.token) { lsSet(LS.token, null); return; }
+  lsSet(LS.token, JSON.stringify(await sealWith(S.key, S.salt, S.iter, { token: S.token })));
+}
+
+/* ---------- GitHub ---------- */
+const ghUrl = () => `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`;
+async function ghGet() {
+  const r = await fetch(ghUrl() + '?ref=' + GH.branch + '&t=' + Date.now(), { headers: { Authorization: 'Bearer ' + S.token, Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+  if (r.status === 404) return { none: true };
+  if (r.status === 401) throw new Error('Token avvist (401)');
+  if (!r.ok) throw new Error('GitHub svarte ' + r.status);
+  const j = await r.json();
+  const txt = dec.decode(b64d(j.content.replace(/\n/g, '')));
+  let data = null; try { data = JSON.parse(txt); } catch (e) {}
+  return { sha: j.sha, data };
+}
+async function pagesGet() {
+  try {
+    const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return { none: true };
+    return { data: await r.json() };
+  } catch (e) { return { none: true }; }
+}
+async function push(force) {
+  if (!S.token) return;
+  clearTimeout(S.pushTimer);
+  setSync('busy', 'Synkroniserer…');
+  try {
+    const env = await saveLocal();
+    if (!S.sha) { const g = await ghGet(); if (!g.none) S.sha = g.sha; }
+    const body = { message: 'Oppdater data (kryptert)', content: btoa(JSON.stringify(env)), branch: GH.branch };
+    if (S.sha) body.sha = S.sha;
+    const r = await fetch(ghUrl(), { method: 'PUT', headers: { Authorization: 'Bearer ' + S.token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.status === 409 || r.status === 422) return conflict();
+    if (!r.ok) throw new Error('GitHub svarte ' + r.status);
+    const j = await r.json();
+    S.sha = j.content.sha; lsSet(LS.sha, S.sha);
+    S.dirty = false;
+    setSync('ok', 'Synket ' + timeNo());
+  } catch (e) { setSync('err', 'Synk feilet: ' + e.message); }
+}
+async function pull(silent) {
+  if (!S.token) return;
+  setSync('busy', 'Henter…');
+  try {
+    const g = await ghGet();
+    if (g.none || !isEnvelope(g.data)) { S.sha = g.sha || null; return push(); }
+    const remote = await openEnv(g.data, S.pw);
+    S.sha = g.sha; lsSet(LS.sha, S.sha);
+    if (!S.state || (remote.savedAt || '') >= (S.state.savedAt || '')) {
+      S.state = migrate(remote);
+      if (g.data.salt !== S.salt) await useSalt(g.data.salt, g.data.iter);
+      await saveLocal(); S.dirty = false; render();
+      setSync('ok', 'Synket ' + timeNo());
+    } else { push(); }
+  } catch (e) {
+    if (e.name === 'OperationError') setSync('err', 'Data på GitHub har et annet passord');
+    else setSync('err', 'Henting feilet: ' + e.message);
+  }
+}
+async function conflict() {
+  setSync('err', 'Konflikt');
+  let remote = null, g = null;
+  try { g = await ghGet(); remote = await openEnv(g.data, S.pw); } catch (e) {}
+  modal('Endret på en annen enhet', `<p>Dataene på GitHub ble endret ${remote ? 'kl. ' + new Date(remote.savedAt).toLocaleString('nb-NO') : ''} etter at du hentet dem. Hvilken versjon skal gjelde?</p>
+    <p class="small muted">Velger du deres versjon forsvinner endringene du gjorde her siden sist synk.</p>`,
+    [{ label: 'Bruk versjonen på GitHub', act: async () => { if (remote) { S.state = migrate(remote); S.sha = g.sha; if (g.data.salt !== S.salt) await useSalt(g.data.salt, g.data.iter); await saveLocal(); S.dirty = false; setSync('ok', 'Synket ' + timeNo()); render(); } } },
+     { label: 'Behold mine, overskriv', cls: 'primary', act: async () => { S.sha = g ? g.sha : null; await push(); } }]);
+}
+
+/* ============================================================
+   DATAMODELL
+   ============================================================ */
+function emptyState() {
+  return { app: 'okonomi', schema: 2, savedAt: new Date().toISOString(), settings: { autoLockMin: 15 },
+    accounts: [], pots: [], budgets: {}, snapshots: [] };
+}
+function migrate(s) {
+  s = Object.assign(emptyState(), s);
+  s.settings = Object.assign({ autoLockMin: 15 }, s.settings);
+  s.pots.forEach(p => { if (p.returnPct == null) p.returnPct = 0; });
+  return s;
+}
+const st = () => S.state;
+const acc = id => st().accounts.find(a => a.id === id);
+const pot = id => st().pots.find(p => p.id === id);
+const potColor = p => p.color || COLORS[st().pots.indexOf(p) % COLORS.length];
+const potsIn = accId => st().pots.filter(p => p.accountId === accId);
+const allocated = accId => sum(potsIn(accId), p => p.balance);
+const unalloc = accId => (acc(accId)?.balance || 0) - allocated(accId);
+
+function totals() {
+  const A = st().accounts;
+  const assets = sum(A.filter(a => ACC_TYPES[a.type]?.asset), a => a.balance);
+  const debt = sum(A.filter(a => a.type === 'gjeld'), a => a.balance);
+  const liquid = sum(A.filter(a => ['sparing', 'bsu', 'investering'].includes(a.type)), a => a.balance);
+  // Brukskonto teller ikke som "ikke fordelt" (der ligger månedens forbruk), med mindre den har mål.
+  const free = sum(A.filter(a => ACC_TYPES[a.type]?.pots && (a.type !== 'bruk' || potsIn(a.id).length)), a => unalloc(a.id));
+  return { assets, debt, net: assets - debt, liquid, free };
+}
+
+/** Månedens budsjett: kalendermåned hvis den finnes, ellers nærmeste tidligere, ellers den første. */
+function planMonth() {
+  const keys = Object.keys(st().budgets).sort();
+  if (!keys.length) return null;
+  const now = ymNow();
+  const prev = keys.filter(k => k <= now);
+  return prev.length ? prev[prev.length - 1] : keys[0];
+}
+function bsum(ym) {
+  const b = st().budgets[ym]; const r = { inntekt: 0, fast: 0, variabel: 0, gjeld: 0, sparing: 0 };
+  if (b) b.lines.forEach(l => r[l.cat] += l.amount || 0);
+  r.ut = r.fast + r.variabel + r.gjeld; r.left = r.inntekt - r.ut - r.sparing;
+  return r;
+}
+const potMonthly = (p, ym = planMonth()) => { const b = st().budgets[ym]; return b ? sum(b.lines.filter(l => l.cat === 'sparing' && l.potId === p.id), l => l.amount) : 0; };
+
+function potStatus(p) {
+  const m = potMonthly(p), out = { pct: null, text: '', cls: '' };
+  if (!p.target) { out.text = m ? kr(m) + ' i måneden' : 'Ingen fast sparing'; return out; }
+  const rest = p.target - p.balance; out.pct = Math.max(0, Math.min(100, p.balance / p.target * 100));
+  if (rest <= 0) { out.text = 'Målet er nådd'; out.cls = 'good'; return out; }
+  if (p.targetDate) {
+    const months = Math.max(1, ymDiff(planMonth() || ymNow(), p.targetDate) + 1);
+    const need = rest / months;
+    out.need = need;
+    if (ymDiff(ymNow(), p.targetDate) < 0) { out.text = 'Fristen har passert, mangler ' + kr(rest); out.cls = 'bad'; }
+    else if (m >= need - 1) { out.text = 'I rute, trenger ' + kr(need) + '/mnd'; out.cls = 'good'; }
+    else { out.text = 'Bak skjema: trenger ' + kr(need) + '/mnd, sparer ' + kr(m); out.cls = 'warn'; }
+  } else if (m > 0) { const n = Math.ceil(rest / m); out.text = 'Nås ca. ' + ymLabel(ymAdd(planMonth() || ymNow(), n - 1)); }
+  else { out.text = 'Mangler ' + kr(rest) + ', ingen fast sparing'; out.cls = 'warn'; }
+  return out;
+}
+
+/** Fremskriving per mål. Sparemål med målbeløp stopper når målet nås. */
+function project(months) {
+  const start = planMonth() || ymNow();
+  const labels = [], series = st().pots.map(p => ({ p, vals: [] }));
+  for (let i = 0; i <= months; i++) labels.push(ymAdd(start, i));
+  series.forEach(s => {
+    const r = Math.pow(1 + (s.p.returnPct || 0) / 100, 1 / 12) - 1, m = potMonthly(s.p);
+    let b = s.p.balance;
+    for (let i = 0; i <= months; i++) {
+      s.vals.push(b);
+      b = b * (1 + r) + m;
+      if (s.p.target && s.p.kind !== 'investering' && b > s.p.target) b = Math.max(s.p.target, s.vals[s.vals.length - 1]);
+    }
+  });
+  return { labels, series };
+}
+
+/* ---------- Budsjettoperasjoner ---------- */
+function createMonth(ym) {
+  const keys = Object.keys(st().budgets).filter(k => k < ym).sort();
+  const from = keys.length ? st().budgets[keys[keys.length - 1]] : null;
+  const lines = from ? from.lines.map(l => ({ ...l, id: uid('l'), done: false })) : [];
+  // sørg for at alle mål har en sparelinje
+  st().pots.forEach(p => { if (!lines.some(l => l.potId === p.id)) lines.push({ id: uid('l'), cat: 'sparing', name: p.name, amount: 0, done: false, potId: p.id }); });
+  st().budgets[ym] = { closed: false, lines };
+}
+function closeMonth(ym) {
+  const b = st().budgets[ym]; const applied = [];
+  b.lines.filter(l => l.cat === 'sparing' && l.potId && l.amount).forEach(l => {
+    const p = pot(l.potId); if (!p) return;
+    p.balance += l.amount; const a = acc(p.accountId); if (a) { a.balance += l.amount; a.updated = todayISO(); }
+    applied.push({ potId: p.id, accountId: p.accountId, amount: l.amount });
+  });
+  b.closed = true; b.closedAt = new Date().toISOString(); b.applied = applied;
+  const t = totals();
+  st().snapshots = st().snapshots.filter(s => s.ym !== ym);
+  st().snapshots.push({ ym, date: todayISO(), net: t.net, liquid: t.liquid, saved: sum(applied, x => x.amount),
+    accounts: st().accounts.map(a => ({ id: a.id, name: a.name, balance: a.balance })),
+    pots: st().pots.map(p => ({ id: p.id, name: p.name, balance: p.balance })) });
+  st().snapshots.sort((a, b) => a.ym.localeCompare(b.ym));
+}
+function reopenMonth(ym) {
+  const b = st().budgets[ym];
+  (b.applied || []).forEach(x => { const p = pot(x.potId); if (p) p.balance -= x.amount; const a = acc(x.accountId); if (a) a.balance -= x.amount; });
+  b.closed = false; delete b.applied; delete b.closedAt;
+  st().snapshots = st().snapshots.filter(s => s.ym !== ym);
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+let modalBtns = [];
+function modal(title, html, buttons = [], opts = {}) {
+  modalBtns = buttons;
+  $('#modal-box').innerHTML = `<h3>${esc(title)}</h3><div class="mbody">${html}</div>
+    <div class="foot"><button class="btn" data-mbtn="-1">${opts.cancel || 'Avbryt'}</button>${buttons.map((b, i) => `<button class="btn ${b.cls || ''}" data-mbtn="${i}">${esc(b.label)}</button>`).join('')}</div>`;
+  $('#modal').classList.remove('hidden');
+  const first = $('#modal-box input:not([type=checkbox]),#modal-box select'); if (first) setTimeout(() => first.focus(), 30);
+}
+function closeModal() { $('#modal').classList.add('hidden'); $('#modal-box').innerHTML = ''; }
+document.addEventListener('click', async e => {
+  const mb = e.target.closest('[data-mbtn]');
+  if (mb) {
+    const i = +mb.dataset.mbtn;
+    if (i < 0) return closeModal();
+    const res = await modalBtns[i].act($('#modal-box'));
+    if (res !== false) closeModal();
+    return;
+  }
+  if (e.target.id === 'modal') closeModal();
+});
+const mval = (box, name) => box.querySelector(`[name="${name}"]`)?.value ?? '';
+const merr = (box, msg) => { let el = box.querySelector('.merr'); if (!el) { el = document.createElement('p'); el.className = 'merr'; el.style.color = 'var(--bad)'; box.querySelector('.mbody').appendChild(el); } el.textContent = msg; return false; };
+const amtInput = (name, v, ph = '0') => `<input type="text" inputmode="decimal" class="amt" name="${name}" value="${esc(numStr(v))}" placeholder="${ph}">`;
+const potOptions = (sel, filter = () => true) => st().pots.filter(filter).map(p => `<option value="${p.id}" ${p.id === sel ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+const accOptions = (sel, onlyPots) => st().accounts.filter(a => !onlyPots || ACC_TYPES[a.type]?.pots).map(a => `<option value="${a.id}" ${a.id === sel ? 'selected' : ''}>${esc(a.name)}</option>`).join('');
+
+/* ============================================================
+   VISNINGER
+   ============================================================ */
+function render() {
+  if (!S.state) return;
+  $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
+  const v = $('#view');
+  const fn = { oversikt: viewOverview, budsjett: viewBudget, mal: viewPots, kontoer: viewAccounts, innst: viewSettings }[S.tab];
+  v.innerHTML = fn();
+  if (S.tab === 'oversikt') drawProjection();
+}
+
+/* ---------- OVERSIKT ---------- */
+function alerts() {
+  const out = [], t = totals(), pm = planMonth();
+  st().accounts.filter(a => ACC_TYPES[a.type]?.pots && a.type !== 'bruk').forEach(a => {
+    const u = unalloc(a.id);
+    if (u > 0.5 && st().pots.length) out.push(['warn', `<b>${kr(u)}</b> på ${esc(a.name)} er ikke fordelt på noe mål.`, `<button class="btn sm primary" data-act="distribute" data-id="${a.id}">Fordel nå</button>`]);
+    if (u < -0.5) out.push(['bad', `Målene på ${esc(a.name)} er ${kr(-u)} mer enn saldoen. Oppdater saldo eller juster målene.`, `<button class="btn sm" data-act="balances">Oppdater saldo</button>`]);
+  });
+  if (pm) {
+    const s = bsum(pm);
+    if (!st().budgets[pm].closed && Math.abs(s.left) > 0.5) out.push([s.left > 0 ? 'warn' : 'bad', s.left > 0 ? `Budsjettet for ${ymLabel(pm).toLowerCase()} har <b>${kr(s.left)}</b> som ikke er gitt en jobb.` : `Budsjettet for ${ymLabel(pm).toLowerCase()} går ${kr(-s.left)} i minus.`, `<button class="btn sm" data-act="goto" data-tab="budsjett">Til budsjett</button>`]);
+    const prevOpen = Object.keys(st().budgets).filter(k => k < ymNow() && !st().budgets[k].closed).sort();
+    if (prevOpen.length) out.push(['info', `${ymLabel(prevOpen[0])} er ikke avsluttet. Avslutt for å bokføre sparingen.`, `<button class="btn sm" data-act="gotomonth" data-ym="${prevOpen[0]}">Åpne</button>`]);
+  }
+  if (!st().budgets[ymNow()] && pm && pm < ymNow()) out.push(['info', `Det finnes ikke noe budsjett for ${ymLabel(ymNow()).toLowerCase()} ennå.`, `<button class="btn sm" data-act="newmonth" data-ym="${ymNow()}">Lag fra ${ymLabel(pm, true)}</button>`]);
+  if (!st().accounts.length) out.push(['info', 'Start med å legge inn kontoene deres.', `<button class="btn sm primary" data-act="accform">Legg til konto</button>`]);
+  return out;
+}
+function viewOverview() {
+  const t = totals(), pm = planMonth(), s = pm ? bsum(pm) : null;
+  const buf = sum(st().pots.filter(p => p.kind === 'buffer'), p => p.balance);
+  const bufMonths = s && s.ut ? buf / s.ut : 0;
+  const rate = s && s.inntekt ? s.sparing / s.inntekt * 100 : 0;
+  const al = alerts();
+  return `
+  ${al.map(([c, txt, btn]) => `<div class="alert ${c}"><span class="sp">${txt}</span>${btn}</div>`).join('')}
+  <div class="tiles">
+    <div class="tile"><span>Nettoformue</span><b>${kr(t.net)}</b><small>${t.debt ? 'Eiendeler ' + kr(t.assets) + ', gjeld ' + kr(t.debt) : 'Alle kontoer'}</small></div>
+    <div class="tile"><span>Sparing og investering</span><b>${kr(t.liquid)}</b><small>${(c => c + (c === 1 ? ' konto' : ' kontoer'))(st().accounts.filter(a => ['sparing','bsu','investering'].includes(a.type)).length)}</small></div>
+    <div class="tile ${t.free > 0.5 ? 'warn' : t.free < -0.5 ? 'bad' : ''}"><span>Ikke fordelt</span><b>${kr(t.free)}</b><small>${t.free > 0.5 ? 'Gi pengene en jobb' : 'Alt har en jobb'}</small></div>
+    <div class="tile"><span>Sparerate ${pm ? ymLabel(pm, true) : ''}</span><b>${rate.toFixed(0)} %</b><small>${s ? kr(s.sparing) + ' av ' + kr(s.inntekt) : 'Ingen budsjett'}</small></div>
+    <div class="tile"><span>Buffer dekker</span><b>${bufMonths.toFixed(1).replace('.', ',')} mnd</b><small>${s ? 'Utgifter ' + kr(s.ut) + '/mnd' : ''}</small></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h2>Sparemål<span class="sp"></span><button class="btn sm ghost" data-act="goto" data-tab="mal">Se alle</button></h2>
+      ${st().pots.length ? st().pots.map(p => { const ps = potStatus(p); return `<div class="potmini">
+        <span class="swatch" style="background:${potColor(p)}"></span><span><b>${esc(p.name)}</b> <span class="small muted">${ps.text}</span></span>
+        <span class="num">${kr(p.balance)}${p.target ? `<span class="muted small"> / ${kr(p.target)}</span>` : ''}</span>
+        ${ps.pct != null ? `<div class="bar"><i style="width:${ps.pct}%;background:${potColor(p)}"></i></div>` : ''}</div>`; }).join('') : '<p class="muted">Ingen mål ennå.</p>'}
+    </div>
+    <div class="card"><h2>${pm ? ymLabel(pm) : 'Måned'}<span class="sp"></span><button class="btn sm ghost" data-act="goto" data-tab="budsjett">Budsjett</button></h2>
+      ${s ? `${stackBar(s)}
+      <table><tbody>
+        <tr><td>Inntekter</td><td class="n">${kr(s.inntekt)}</td></tr>
+        <tr><td>Faste kostnader</td><td class="n">${kr(s.fast)}</td></tr>
+        <tr><td>Variable og fond</td><td class="n">${kr(s.variabel)}</td></tr>
+        ${s.gjeld ? `<tr><td>Gjeld og avdrag</td><td class="n">${kr(s.gjeld)}</td></tr>` : ''}
+        <tr><td>Sparing til mål</td><td class="n">${kr(s.sparing)}</td></tr>
+        <tr class="sum"><td>Ikke fordelt</td><td class="n" style="color:${Math.abs(s.left) < 1 ? 'var(--good)' : s.left > 0 ? 'var(--warn)' : 'var(--bad)'}">${kr(s.left)}</td></tr>
+      </tbody></table>` : '<p class="muted">Ingen budsjett ennå.</p>'}
+    </div>
+  </div>
+  <div class="card"><h2>Fremskriving av sparemål<span class="sp"></span>
+    <select id="horizon" style="width:auto">${[[12,'1 år'],[36,'3 år'],[60,'5 år'],[120,'10 år'],[240,'20 år']].map(([v,l]) => `<option value="${v}" ${S.horizon == v ? 'selected' : ''}>${l}</option>`).join('')}</select></h2>
+    <p class="small muted" style="margin-top:-6px">Bygger på månedlig sparing i budsjettet for ${pm ? ymLabel(pm).toLowerCase() : 'denne måneden'} og forventet avkastning per mål. Sparemål slutter å vokse når målbeløpet er nådd.</p>
+    <div class="chart" id="projchart"></div>
+    <div class="legend" id="projlegend"></div>
+  </div>
+  ${st().snapshots.length ? `<div class="card"><h2>Historikk</h2><table><thead><tr><th>Måned</th><th class="n">Spart</th><th class="n hide-sm">Sparing totalt</th><th class="n">Nettoformue</th><th class="n hide-sm">Endring</th></tr></thead><tbody>
+    ${st().snapshots.slice().reverse().map((x, i, arr) => { const prev = arr[i + 1]; return `<tr><td>${ymLabel(x.ym)}</td><td class="n">${kr(x.saved)}</td><td class="n hide-sm">${kr(x.liquid)}</td><td class="n">${kr(x.net)}</td><td class="n hide-sm">${prev ? krs(x.net - prev.net) : ''}</td></tr>`; }).join('')}
+  </tbody></table></div>` : ''}`;
+}
+function stackBar(s) {
+  const parts = [['fast', s.fast], ['variabel', s.variabel], ['gjeld', s.gjeld], ['sparing', s.sparing]];
+  const tot = Math.max(s.inntekt, s.ut + s.sparing) || 1;
+  const left = Math.max(0, s.left);
+  return `<div class="stack">${parts.map(([c, v]) => v > 0 ? `<i style="width:${v / tot * 100}%;background:${CATS.find(x => x.id === c).color}" title="${CATS.find(x => x.id === c).label}: ${kr(v)}"></i>` : '').join('')}${left ? `<i style="width:${left / tot * 100}%;background:repeating-linear-gradient(45deg,var(--warn) 0 4px,transparent 4px 8px)" title="Ikke fordelt ${kr(left)}"></i>` : ''}</div>
+  <div class="legend">${parts.filter(p => p[1] > 0).map(([c, v]) => `<span><i class="swatch" style="background:${CATS.find(x => x.id === c).color}"></i>${CATS.find(x => x.id === c).label} ${Math.round(v / (s.inntekt || 1) * 100)} %</span>`).join('')}${left ? `<span><i class="swatch" style="background:var(--warn)"></i>Ikke fordelt ${Math.round(left / (s.inntekt || 1) * 100)} %</span>` : ''}</div>`;
+}
+
+/* Enkel stablet arealgraf i SVG (ingen eksterne biblioteker) */
+function drawProjection() {
+  const el = $('#projchart'); if (!el) return;
+  const pots = st().pots;
+  if (!pots.length) { el.innerHTML = '<p class="muted">Legg til sparemål for å se fremskriving.</p>'; return; }
+  const { labels, series } = project(S.horizon);
+  const W = el.clientWidth || 600, H = Math.max(200, Math.min(300, W * 0.45)), pl = 8, pr = 8, pt = 10, pb = 22;
+  const n = labels.length, stacks = labels.map((_, i) => { let acc0 = 0; return series.map(s => { const y0 = acc0; acc0 += Math.max(0, s.vals[i]); return [y0, acc0]; }); });
+  const rawMax = Math.max(1, ...stacks.map(st0 => st0.length ? st0[st0.length - 1][1] : 0));
+  const mag = Math.pow(10, Math.floor(Math.log10(rawMax / 4))), tickStep = [1, 2, 2.5, 5, 10].map(f => f * mag).find(t => rawMax / t <= 4.5);
+  const maxV = Math.ceil(rawMax / tickStep) * tickStep;
+  const x = i => pl + (W - pl - pr) * i / (n - 1), y = v => pt + (H - pt - pb) * (1 - v / maxV);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}">`;
+  let grid = '';
+  for (let v = 0; v <= maxV + 1; v += tickStep) { const yy = y(v); svg += `<line x1="${pl}" x2="${W - pr}" y1="${yy}" y2="${yy}" stroke="var(--border)"/>`;
+    if (v) grid += `<text x="${pl + 4}" y="${yy - 4}" font-size="10" fill="var(--text)" stroke="var(--surface)" stroke-width="3" paint-order="stroke">${v >= 1e6 ? (v / 1e6).toLocaleString('nb-NO', { maximumFractionDigits: 2 }) + ' mill' : Math.round(v / 1000) + 'k'}</text>`; }
+  series.forEach((s, si) => {
+    const top = stacks.map((st0, i) => `${x(i)},${y(st0[si][1])}`), bot = stacks.map((st0, i) => `${x(i)},${y(st0[si][0])}`).reverse();
+    svg += `<polygon points="${top.concat(bot).join(' ')}" fill="${potColor(s.p)}" fill-opacity=".8" stroke="${potColor(s.p)}" stroke-width="1"/>`;
+  });
+  svg += grid;
+  const step = Math.ceil(n / Math.max(3, Math.floor(W / 80)));
+  labels.forEach((l, i) => { if (i % step === 0 || i === n - 1) svg += `<text x="${x(i)}" y="${H - 6}" font-size="10" fill="var(--text3)" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${ymLabel(l, true)}</text>`; });
+  svg += `<line id="hov" x1="0" x2="0" y1="${pt}" y2="${H - pb}" stroke="var(--text3)" stroke-dasharray="3 3" visibility="hidden"/><rect x="0" y="0" width="${W}" height="${H}" fill="transparent" id="hovrect"/></svg><div class="tip hidden"></div>`;
+  el.innerHTML = svg;
+  $('#projlegend').innerHTML = series.map(s => `<span><i class="swatch" style="background:${potColor(s.p)}"></i>${esc(s.p.name)}</span>`).join('');
+  const tip = $('.tip', el), hov = $('#hov', el);
+  const move = ev => {
+    const r = el.getBoundingClientRect(), cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    const i = Math.max(0, Math.min(n - 1, Math.round((cx - pl) / (W - pl - pr) * (n - 1))));
+    hov.setAttribute('x1', x(i)); hov.setAttribute('x2', x(i)); hov.setAttribute('visibility', 'visible');
+    const tot = sum(series, s => s.vals[i]);
+    tip.innerHTML = `<b>${ymLabel(labels[i])}</b>${series.map(s => `<div><span><i class="swatch" style="background:${potColor(s.p)}"></i> ${esc(s.p.name)}</span><span class="num">${kr(s.vals[i])}</span></div>`).join('')}<div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px"><b>Totalt</b><b class="num">${kr(tot)}</b></div>`;
+    tip.classList.remove('hidden');
+    const tw = tip.offsetWidth; tip.style.left = Math.min(Math.max(0, x(i) + 12), W - tw) + 'px'; tip.style.top = '8px';
+    if (x(i) + 12 + tw > W) tip.style.left = Math.max(0, x(i) - tw - 12) + 'px';
+  };
+  const out = () => { tip.classList.add('hidden'); hov.setAttribute('visibility', 'hidden'); };
+  const rect = $('#hovrect', el);
+  rect.addEventListener('mousemove', move); rect.addEventListener('touchmove', move, { passive: true }); rect.addEventListener('touchstart', move, { passive: true });
+  rect.addEventListener('mouseleave', out); rect.addEventListener('touchend', () => setTimeout(out, 1500));
+}
+
+/* ---------- BUDSJETT ---------- */
+function viewBudget() {
+  const keys = Object.keys(st().budgets).sort();
+  if (!S.budgetMonth) S.budgetMonth = planMonth() || ymNow();
+  const ym = S.budgetMonth, b = st().budgets[ym];
+  const nav = `<div class="monthnav"><button class="btn sm" data-act="bmonth" data-d="-1" aria-label="Forrige måned">‹</button><b>${ymLabel(ym)}</b><button class="btn sm" data-act="bmonth" data-d="1" aria-label="Neste måned">›</button>
+    ${ym !== ymNow() ? `<button class="btn sm ghost" data-act="bmonth" data-d="0">I dag</button>` : ''}</div>`;
+  if (!b) {
+    const prev = keys.filter(k => k < ym).pop();
+    return `<div class="card"><h2>${nav}</h2><p>Ingen budsjett for ${ymLabel(ym).toLowerCase()}.</p>
+      <button class="btn primary" data-act="newmonth" data-ym="${ym}">${prev ? 'Lag budsjett ved å kopiere ' + ymLabel(prev).toLowerCase() : 'Lag tomt budsjett'}</button></div>`;
+  }
+  const s = bsum(ym), edit = S.budgetEdit && !b.closed;
+  const head = `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:12px">${nav}<div class="row">
+      ${b.closed ? `<span class="badge good">Avsluttet ${dateNo(b.closedAt)}</span><button class="btn sm" data-act="reopen">Gjenåpne</button>`
+        : `${edit ? `<button class="btn sm primary" data-act="bedit">Ferdig</button>` : `<button class="btn sm" data-act="bedit">Rediger</button>`}<button class="btn sm" data-act="closemonth">Avslutt måned</button>`}
+      <button class="btn sm ghost" data-act="delmonth" title="Slett budsjettet for denne måneden">Slett</button></div></div>
+    <div id="bsum">${budgetSummary(s)}</div>
+    ${!b.closed && s.left > 0.5 ? `<div class="row" style="margin-top:10px"><button class="btn sm primary" data-act="giveleft">Fordel ${kr(s.left)} til mål</button><span class="small muted">Nullbasert: hver krone skal ha en jobb.</span></div>` : ''}
+    ${b.closed ? `<p class="small muted" style="margin-bottom:0">Sparingen er bokført på målene og kontoene. Gjenåpne for å endre, da trekkes bokføringen tilbake.</p>` : ''}
+  </div>`;
+  const secs = CATS.map(c => {
+    const lines = b.lines.filter(l => l.cat === c.id), tot = sum(lines, l => l.amount);
+    let rows;
+    if (edit) {
+      rows = lines.map(l => `<tr>
+        <td><input type="text" data-line="${l.id}" data-f="name" value="${esc(l.name)}" placeholder="Navn"></td>
+        ${c.id === 'sparing' ? `<td class="pot"><select data-line="${l.id}" data-f="potId"><option value="">Uten mål</option>${potOptions(l.potId)}</select></td>` : `<td class="hide-sm"><input type="text" data-line="${l.id}" data-f="note" value="${esc(l.note)}" placeholder="Notat"></td>`}
+        <td class="amt"><input type="text" inputmode="decimal" class="amt" data-line="${l.id}" data-f="amount" value="${esc(numStr(l.amount))}" placeholder="0"></td>
+        <td class="del"><button class="btn sm ghost danger" data-act="dline" data-id="${l.id}" aria-label="Slett linje">✕</button></td></tr>`).join('')
+        + `<tr><td colspan="4"><button class="btn sm ghost" data-act="aline" data-cat="${c.id}">+ Legg til linje</button></td></tr>`;
+    } else {
+      rows = lines.map(l => `<tr class="${l.amount ? '' : 'muted'}">
+        <td class="c">${b.closed ? '' : `<input type="checkbox" class="chk" data-act="done" data-id="${l.id}" ${l.done ? 'checked' : ''} title="Betalt / overført">`}</td>
+        <td>${esc(l.name)}${c.id === 'sparing' && l.potId && pot(l.potId) ? ` <span class="swatch" style="background:${potColor(pot(l.potId))}"></span>` : ''}${l.note ? `<span class="note">${esc(l.note)}</span>` : ''}</td>
+        <td class="n">${kr(l.amount)}</td></tr>`).join('') || `<tr><td colspan="3" class="muted small">Ingen linjer</td></tr>`;
+    }
+    const done = lines.filter(l => l.done).length;
+    return `<div class="bsec"><h3><span><i class="swatch" style="background:${c.color}"></i> ${c.label}</span><span class="num" data-cattot="${c.id}">${kr(tot)}</span></h3>
+      <table class="btable ${edit ? 'edit' : ''}"><tbody>${rows}</tbody></table>
+      ${!edit && !b.closed && lines.length ? `<div class="small muted" style="text-align:right;margin-top:2px">${done} av ${lines.length} avkrysset</div>` : ''}</div>`;
+  }).join('');
+  return head + `<div class="card">${secs}</div>`;
+}
+
+function budgetSummary(s) {
+  const leftCls = Math.abs(s.left) < 1 ? 'left0' : s.left > 0 ? 'leftpos' : 'leftneg';
+  return `<div class="sumgrid">
+      <div><span>Inntekter</span><b>${kr(s.inntekt)}</b></div>
+      <div><span>Utgifter</span><b>${kr(s.ut)}</b></div>
+      <div><span>Sparing til mål</span><b>${kr(s.sparing)}</b></div>
+      <div class="${leftCls}"><span>Ikke fordelt</span><b>${kr(s.left)}</b></div>
+    </div>${stackBar(s)}`;
+}
+function refreshBudgetSums() {
+  const b = st().budgets[S.budgetMonth]; if (!b) return;
+  const el = $('#bsum'); if (el) el.innerHTML = budgetSummary(bsum(S.budgetMonth));
+  CATS.forEach(c => { const t = $(`[data-cattot="${c.id}"]`); if (t) t.textContent = kr(sum(b.lines.filter(l => l.cat === c.id), l => l.amount)); });
+}
+
+/* ---------- SPAREMÅL ---------- */
+function viewPots() {
+  const t = totals();
+  return `<div class="card"><h2>Sparemål<span class="sp"></span>
+      <button class="btn sm" data-act="transfer">Flytt mellom mål</button>
+      ${t.free > 0.5 ? `<button class="btn sm" data-act="distribute">Fordel ${kr(t.free)}</button>` : ''}
+      <button class="btn sm primary" data-act="potform">+ Nytt mål</button></h2>
+    <p class="small muted" style="margin:0">Et mål er en del av saldoen på en konto som er satt av til noe bestemt. Én konto kan ha flere mål, akkurat som konvolutter i samme skuff. Månedlig sparing styres fra budsjettet.</p>
+  </div>
+  <div class="pots">${st().pots.map(p => {
+    const ps = potStatus(p), a = acc(p.accountId), m = potMonthly(p);
+    return `<div class="pot">
+      <div class="top"><span class="swatch" style="background:${potColor(p)}"></span><b>${esc(p.name)}</b><span class="badge">${POT_KINDS[p.kind] || ''}</span></div>
+      <div class="bal">${kr(p.balance)}${p.target ? `<span class="muted small" style="font-weight:400"> av ${kr(p.target)}</span>` : ''}</div>
+      ${ps.pct != null ? `<div class="bar"><i style="width:${ps.pct}%;background:${potColor(p)}"></i></div>` : ''}
+      <div class="meta">${ps.cls ? `<span class="badge ${ps.cls}">${ps.text}</span>` : ps.text}</div>
+      <div class="meta">
+        ${[p.targetDate ? 'Frist ' + ymLabel(p.targetDate).toLowerCase() : '', p.target ? kr(m) + '/mnd' : '', p.returnPct ? String(p.returnPct).replace('.', ',') + ' % avkastning/år' : ''].filter(Boolean).join(' · ')}${p.targetDate || p.target || p.returnPct ? '<br>' : ''}
+        <span class="muted">Ligger på ${a ? esc(a.name) : 'ingen konto'}</span>
+        ${p.note ? `<br><span class="muted">${esc(p.note)}</span>` : ''}
+      </div>
+      <div class="acts"><button class="btn sm" data-act="potadj" data-id="${p.id}">Sett inn / ta ut</button><button class="btn sm" data-act="potform" data-id="${p.id}">Rediger</button></div>
+    </div>`; }).join('') || '<p class="muted">Ingen mål ennå.</p>'}</div>`;
+}
+
+/* ---------- KONTOER ---------- */
+function viewAccounts() {
+  const t = totals(), A = st().accounts;
+  return `<div class="card"><h2>Kontoer, eiendeler og gjeld<span class="sp"></span>
+      <button class="btn sm" data-act="balances">Oppdater saldoer</button>
+      <button class="btn sm primary" data-act="accform">+ Ny</button></h2>
+    <table><thead><tr><th>Navn</th><th class="hide-sm">Type</th><th class="n">Saldo</th><th class="n hide-sm">Satt av til mål</th><th class="n">Ikke fordelt</th><th></th></tr></thead><tbody>
+    ${A.map(a => { const T = ACC_TYPES[a.type] || {}; const u = T.pots ? unalloc(a.id) : null; return `<tr>
+      <td><b>${esc(a.name)}</b><span class="note">${T.label || ''}${a.updated ? ' · oppdatert ' + dateNo(a.updated) : ''}</span></td>
+      <td class="hide-sm">${T.label || ''}</td>
+      <td class="n">${a.type === 'gjeld' ? '−' : ''}${kr(a.balance)}</td>
+      <td class="n hide-sm">${T.pots ? kr(allocated(a.id)) : ''}</td>
+      <td class="n" style="${u != null && u < -0.5 ? 'color:var(--bad)' : u > 0.5 && a.type !== 'bruk' ? 'color:var(--warn)' : ''}">${u != null ? kr(u) : ''}</td>
+      <td class="n"><button class="btn sm ghost" data-act="accform" data-id="${a.id}">Rediger</button></td></tr>`; }).join('') || '<tr><td colspan="6" class="muted">Ingen kontoer ennå.</td></tr>'}
+    <tr class="sum"><td>Nettoformue</td><td class="hide-sm"></td><td class="n">${kr(t.net)}</td><td class="hide-sm"></td><td class="n">${kr(t.free)}</td><td></td></tr>
+    </tbody></table>
+    <p class="small muted">«Ikke fordelt» er saldoen minus det som er satt av til mål. Renter, ekstra innskudd og avvik havner her, og kan fordeles videre. Legg gjerne inn bolig som eiendel og lån som gjeld for å se hele formuen.</p>
+  </div>`;
+}
+
+/* ---------- INNSTILLINGER ---------- */
+function viewSettings() {
+  return `<div class="grid g2">
+  <div class="card"><h2>Synkronisering med GitHub</h2>
+    <p class="small">Dataene lagres kryptert i <code>data.json</code> i repoet ${esc(GH.owner)}/${esc(GH.repo)}. For å kunne lagre trengs et fine-grained token med tilgang <i>Contents: Read and write</i> kun til dette repoet. Tokenet lagres kryptert i denne nettleseren.</p>
+    <p class="small">Status: ${S.token ? '<span class="badge good">Token lagret</span>' : '<span class="badge warn">Ikke satt opp, lagres bare i denne nettleseren</span>'}</p>
+    <div class="row">${S.token ? `<button class="btn sm" data-act="pull">Hent nå</button><button class="btn sm" data-act="push">Lagre nå</button><button class="btn sm danger" data-act="tokenclear">Fjern token</button>` : ''}
+      <button class="btn sm primary" data-act="tokenform">${S.token ? 'Bytt token' : 'Legg inn token'}</button></div>
+  </div>
+  <div class="card"><h2>Sikkerhet</h2>
+    <label class="f"><span>Lås automatisk etter inaktivitet</span>
+      <select id="autolock">${[5, 15, 30, 60, 0].map(m => `<option value="${m}" ${st().settings.autoLockMin == m ? 'selected' : ''}>${m ? m + ' minutter' : 'Aldri'}</option>`).join('')}</select></label>
+    <div class="row"><button class="btn sm" data-act="pwchange">Bytt passord</button><button class="btn sm" data-act="lock">Lås nå</button><button class="btn sm danger" data-act="forget">Glem denne enheten</button></div>
+    <p class="small muted">Kryptering: AES-256-GCM med nøkkel avledet fra passordet (PBKDF2, SHA-256, ${KDF_ITER.toLocaleString('nb-NO')} runder). Ingenting lagres ukryptert, verken i repoet eller i nettleseren.</p>
+  </div>
+  <div class="card"><h2>Sikkerhetskopi</h2>
+    <p class="small">Last ned en kryptert kopi (samme passord). Den kan brukes ved førstegangsoppsett eller importeres her.</p>
+    <div class="row"><button class="btn sm" data-act="export">Last ned kryptert kopi</button><button class="btn sm" data-act="exportplain">Last ned ukryptert JSON</button>
+      <label class="btn sm">Importer…<input type="file" id="importfile" accept=".json" hidden></label></div>
+  </div>
+  <div class="card"><h2>Om dataene</h2>
+    <p class="small">${st().accounts.length} kontoer, ${st().pots.length} mål, ${Object.keys(st().budgets).length} budsjettmåneder, ${st().snapshots.length} avsluttede måneder.<br>Sist endret ${new Date(st().savedAt).toLocaleString('nb-NO')}.</p>
+  </div></div>`;
+}
+
+/* ============================================================
+   HANDLINGER
+   ============================================================ */
+const ACT = {
+  goto: el => { S.tab = el.dataset.tab; lsSet(LS.tab, S.tab); render(); scrollTo(0, 0); },
+  gotomonth: el => { S.budgetMonth = el.dataset.ym; S.tab = 'budsjett'; render(); },
+  lock: () => lock(),
+  newmonth: el => { createMonth(el.dataset.ym); S.budgetMonth = el.dataset.ym; S.tab = 'budsjett'; changed(); },
+  bmonth: el => { const d = +el.dataset.d; S.budgetMonth = d === 0 ? ymNow() : ymAdd(S.budgetMonth, d); S.budgetEdit = false; render(); },
+  bedit: () => { S.budgetEdit = !S.budgetEdit; render(); },
+  done: el => { const l = st().budgets[S.budgetMonth].lines.find(x => x.id === el.dataset.id); l.done = el.checked; changed({ noRender: true }); },
+  aline: el => { const b = st().budgets[S.budgetMonth]; b.lines.push({ id: uid('l'), cat: el.dataset.cat, name: '', amount: 0, done: false, note: '' }); changed(); setTimeout(() => { const ins = $$(`.btable.edit input[data-f=name]`); const last = ins.filter(i => b.lines.find(l => l.id === i.dataset.line)?.cat === el.dataset.cat).pop(); last && last.focus(); }, 20); },
+  dline: el => { const b = st().budgets[S.budgetMonth]; b.lines = b.lines.filter(l => l.id !== el.dataset.id); changed(); },
+  delmonth: () => {
+    const ym = S.budgetMonth, b = st().budgets[ym];
+    modal('Slette ' + ymLabel(ym).toLowerCase() + '?', `<p>Budsjettet for måneden slettes.${b.closed ? ' Bokført sparing trekkes tilbake fra mål og kontoer.' : ''}</p>`, [{ label: 'Slett', cls: 'danger', act: () => { if (b.closed) reopenMonth(ym); delete st().budgets[ym]; changed(); } }]);
+  },
+  closemonth: () => {
+    const ym = S.budgetMonth, b = st().budgets[ym], s = bsum(ym);
+    const sp = b.lines.filter(l => l.cat === 'sparing' && l.amount);
+    const noPot = sp.filter(l => !l.potId || !pot(l.potId));
+    modal('Avslutt ' + ymLabel(ym).toLowerCase(), `
+      <p>Når måneden avsluttes legges sparingen til på målene og på kontoene de ligger på. Gjør overføringene i nettbanken først.</p>
+      <table><tbody>${sp.filter(l => l.potId && pot(l.potId)).map(l => `<tr><td>${esc(pot(l.potId).name)} <span class="muted small">på ${esc(acc(pot(l.potId).accountId)?.name || '?')}</span></td><td class="n">${krs(l.amount)}</td></tr>`).join('') || '<tr><td class="muted">Ingen sparing til mål denne måneden</td></tr>'}</tbody></table>
+      ${noPot.length ? `<p class="small" style="color:var(--warn)">${noPot.length} sparelinje(r) mangler mål og blir ikke bokført.</p>` : ''}
+      ${Math.abs(s.left) > 0.5 ? `<p class="small" style="color:var(--warn)">Merk: ${kr(s.left)} er ikke fordelt i budsjettet.</p>` : ''}
+      <p class="small muted">Et øyeblikksbilde av formuen lagres i historikken. Du kan gjenåpne måneden senere.</p>`,
+      [{ label: 'Avslutt og bokfør', cls: 'primary', act: () => { closeMonth(ym); S.budgetEdit = false; changed(); } }]);
+  },
+  reopen: () => modal('Gjenåpne ' + ymLabel(S.budgetMonth).toLowerCase() + '?', '<p>Sparingen som ble bokført trekkes tilbake fra målene og kontoene, og øyeblikksbildet slettes.</p>',
+    [{ label: 'Gjenåpne', cls: 'primary', act: () => { reopenMonth(S.budgetMonth); changed(); } }]),
+  giveleft: () => {
+    const s = bsum(S.budgetMonth);
+    if (!st().pots.length) return modal('Ingen mål', '<p>Lag et sparemål først.</p>');
+    modal('Fordel ' + kr(s.left), `<label class="f"><span>Til mål</span><select name="pot">${potOptions()}</select></label><label class="f"><span>Beløp</span>${amtInput('amt', s.left)}</label>`,
+      [{ label: 'Legg til', cls: 'primary', act: box => {
+        const pid = mval(box, 'pot'), a = parseNum(mval(box, 'amt')), b = st().budgets[S.budgetMonth];
+        let l = b.lines.find(x => x.cat === 'sparing' && x.potId === pid);
+        if (!l) { l = { id: uid('l'), cat: 'sparing', name: pot(pid).name, amount: 0, done: false, potId: pid }; b.lines.push(l); }
+        l.amount += a; changed();
+      } }]);
+  },
+  potform: el => {
+    const p = el.dataset.id ? pot(el.dataset.id) : null;
+    const potAccs = st().accounts.filter(a => ACC_TYPES[a.type]?.pots);
+    if (!potAccs.length) return modal('Ingen konto', '<p>Legg til en konto først, målet må ligge på en konto.</p>', [{ label: 'Legg til konto', cls: 'primary', act: () => { setTimeout(() => ACT.accform({ dataset: {} }), 10); } }]);
+    const pm = planMonth();
+    modal(p ? 'Rediger ' + p.name : 'Nytt sparemål', `
+      <label class="f"><span>Navn</span><input type="text" name="name" value="${esc(p?.name)}" placeholder="F.eks. Bil, Barn, Ferie"></label>
+      <div class="f2">
+        <label class="f"><span>Type</span><select name="kind">${Object.entries(POT_KINDS).map(([k, l]) => `<option value="${k}" ${(p?.kind || 'mal') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label class="f"><span>Ligger på konto</span><select name="acc">${accOptions(p?.accountId, true)}</select></label>
+        <label class="f"><span>Målbeløp (valgfritt)</span>${amtInput('target', p?.target)}</label>
+        <label class="f"><span>Frist (valgfritt)</span><input type="month" name="date" value="${esc(p?.targetDate || '')}"></label>
+        <label class="f"><span>Månedlig sparing${pm ? ' fra ' + ymLabel(pm, true) : ''}</span>${amtInput('monthly', p ? potMonthly(p) : 0)}</label>
+        <label class="f"><span>Forventet avkastning/rente % per år</span><input type="text" inputmode="decimal" name="ret" value="${esc(p?.returnPct ? String(p.returnPct).replace('.', ',') : '')}" placeholder="0"></label>
+      </div>
+      ${p ? '' : `<label class="f"><span>Startbeløp (tas fra ikke fordelt på kontoen)</span>${amtInput('start', 0)}</label>`}
+      <label class="f"><span>Notat</span><input type="text" name="note" value="${esc(p?.note)}"></label>
+      <label class="f"><span>Farge</span><input type="color" name="color" value="${p ? potColor(p) : COLORS[st().pots.length % COLORS.length]}" style="width:60px;height:34px;padding:2px"></label>`,
+      [...(p ? [{ label: 'Slett mål', cls: 'danger', act: () => { confirmDelPot(p); return true; } }] : []),
+       { label: 'Lagre', cls: 'primary', act: box => {
+        const name = mval(box, 'name').trim(); if (!name) return merr(box, 'Gi målet et navn.');
+        const q = p || { id: uid('p'), balance: parseNum(mval(box, 'start')) };
+        Object.assign(q, { name, kind: mval(box, 'kind'), accountId: mval(box, 'acc'), target: parseNum(mval(box, 'target')) || null,
+          targetDate: mval(box, 'date') || null, returnPct: parseNum(mval(box, 'ret')), note: mval(box, 'note').trim(), color: mval(box, 'color') });
+        if (!p) st().pots.push(q);
+        // månedlig sparing lagres som sparelinje i månedens budsjett
+        const ym = planMonth(), b = ym && st().budgets[ym];
+        if (b && !b.closed) {
+          const m = parseNum(mval(box, 'monthly')); let ls = b.lines.filter(l => l.cat === 'sparing' && l.potId === q.id);
+          if (!ls.length && m) { b.lines.push({ id: uid('l'), cat: 'sparing', name: q.name, amount: m, done: false, potId: q.id }); }
+          else if (ls.length) { ls[0].amount = m; ls[0].name = q.name; ls.slice(1).forEach(l => l.amount = 0); }
+        }
+        changed();
+      } }]);
+  },
+  potadj: el => {
+    const p = pot(el.dataset.id), a = acc(p.accountId);
+    modal(p.name + ': sett inn eller ta ut', `
+      <p class="small muted">Nå: ${kr(p.balance)}. Ikke fordelt på ${esc(a?.name)}: ${kr(unalloc(p.accountId))}.</p>
+      <label class="f"><span>Beløp (negativt for å ta ut)</span>${amtInput('amt', 0)}</label>
+      <label class="f"><span>Hva skjer med kontosaldoen?</span><select name="mode">
+        <option value="alloc">Flytt fra/til «ikke fordelt» (saldo uendret)</option>
+        <option value="real">Penger inn på/ut av kontoen (saldo endres)</option></select></label>
+      <p class="small muted">Bruk «penger ut» når dere faktisk bruker pengene, f.eks. kjøper bilen.</p>`,
+      [{ label: 'Utfør', cls: 'primary', act: box => {
+        const v = parseNum(mval(box, 'amt')); if (!v) return merr(box, 'Skriv et beløp.');
+        p.balance += v; if (mval(box, 'mode') === 'real' && a) { a.balance += v; a.updated = todayISO(); }
+        changed();
+      } }]);
+  },
+  transfer: () => {
+    if (st().pots.length < 2) return modal('For få mål', '<p>Du trenger minst to mål for å flytte mellom dem.</p>');
+    modal('Flytt mellom mål', `<div class="f2"><label class="f"><span>Fra</span><select name="from">${potOptions()}</select></label>
+      <label class="f"><span>Til</span><select name="to">${potOptions(st().pots[1].id)}</select></label></div>
+      <label class="f"><span>Beløp</span>${amtInput('amt', 0)}</label>
+      <p class="small muted">Ligger målene på ulike kontoer flyttes saldoen mellom kontoene også. Husk å gjøre overføringen i banken.</p>`,
+      [{ label: 'Flytt', cls: 'primary', act: box => {
+        const f = pot(mval(box, 'from')), t = pot(mval(box, 'to')), v = parseNum(mval(box, 'amt'));
+        if (f === t) return merr(box, 'Velg to forskjellige mål.'); if (!v) return merr(box, 'Skriv et beløp.');
+        f.balance -= v; t.balance += v;
+        if (f.accountId !== t.accountId) { const fa = acc(f.accountId), ta = acc(t.accountId); if (fa) { fa.balance -= v; fa.updated = todayISO(); } if (ta) { ta.balance += v; ta.updated = todayISO(); } }
+        changed();
+      } }]);
+  },
+  distribute: el => {
+    const accs = st().accounts.filter(a => ACC_TYPES[a.type]?.pots && unalloc(a.id) > 0.5 && potsIn(a.id).length);
+    const a = el.dataset.id ? acc(el.dataset.id) : accs[0];
+    if (!a) return modal('Ingenting å fordele', '<p>Alle penger er allerede fordelt, eller kontoen har ingen mål.</p>');
+    const ps = potsIn(a.id), free = unalloc(a.id);
+    modal('Fordel ' + kr(free) + ' på ' + a.name, `<p class="small muted">Skriv hvor mye hvert mål skal få. Resten blir stående som ikke fordelt.</p>
+      <table><tbody>${ps.map(p => `<tr><td><span class="swatch" style="background:${potColor(p)}"></span> ${esc(p.name)}<span class="note">Har ${kr(p.balance)}${p.target ? ' av ' + kr(p.target) : ''}</span></td><td style="width:140px">${amtInput('d_' + p.id, 0)}</td></tr>`).join('')}
+      <tr class="sum"><td>Igjen</td><td class="n" id="dist-left">${kr(free)}</td></tr></tbody></table>`,
+      [{ label: 'Fordel', cls: 'primary', act: box => {
+        const vals = ps.map(p => [p, parseNum(mval(box, 'd_' + p.id))]);
+        if (sum(vals, v => v[1]) > free + 0.5) return merr(box, 'Du har fordelt mer enn det som er ledig.');
+        vals.forEach(([p, v]) => p.balance += v); changed();
+      } }]);
+    $('#modal-box .mbody').addEventListener('input', () => { const left = free - sum(ps, p => parseNum(mval($('#modal-box'), 'd_' + p.id))); const el2 = $('#dist-left'); if (el2) { el2.textContent = kr(left); el2.style.color = left < -0.5 ? 'var(--bad)' : ''; } });
+  },
+  accform: el => {
+    const a = el.dataset.id ? acc(el.dataset.id) : null;
+    modal(a ? 'Rediger ' + a.name : 'Ny konto', `
+      <label class="f"><span>Navn</span><input type="text" name="name" value="${esc(a?.name)}" placeholder="F.eks. Sparekonto, Aksjesparekonto, Boliglån"></label>
+      <div class="f2"><label class="f"><span>Type</span><select name="type">${Object.entries(ACC_TYPES).map(([k, T]) => `<option value="${k}" ${(a?.type || 'sparing') === k ? 'selected' : ''}>${T.label}</option>`).join('')}</select></label>
+      <label class="f"><span>Saldo (gjeld skrives som positivt tall)</span>${amtInput('bal', a?.balance)}</label></div>
+      <label class="f"><span>Notat</span><input type="text" name="note" value="${esc(a?.note)}" placeholder="Bank, kontonavn, rente…"></label>`,
+      [...(a ? [{ label: 'Slett', cls: 'danger', act: () => {
+        if (potsIn(a.id).length) { setTimeout(() => modal('Kan ikke slette', `<p>${esc(a.name)} har ${potsIn(a.id).length} mål. Flytt eller slett målene først.</p>`), 10); return true; }
+        st().accounts = st().accounts.filter(x => x !== a); changed(); } }] : []),
+       { label: 'Lagre', cls: 'primary', act: box => {
+        const name = mval(box, 'name').trim(); if (!name) return merr(box, 'Gi kontoen et navn.');
+        const q = a || { id: uid('a') }, nb = parseNum(mval(box, 'bal'));
+        if (!a || q.balance !== nb) q.updated = todayISO();
+        Object.assign(q, { name, type: mval(box, 'type'), balance: nb, note: mval(box, 'note').trim() });
+        if (!a) st().accounts.push(q); changed();
+      } }]);
+  },
+  balances: () => {
+    if (!st().accounts.length) return ACT.accform({ dataset: {} });
+    modal('Oppdater saldoer', `<p class="small muted">Skriv inn saldoen slik den står i nettbanken i dag.</p>
+      <table><tbody>${st().accounts.map(a => `<tr><td>${esc(a.name)}<span class="note">${ACC_TYPES[a.type]?.label || ''}</span></td><td style="width:150px">${amtInput('b_' + a.id, a.balance)}</td></tr>`).join('')}</tbody></table>`,
+      [{ label: 'Lagre', cls: 'primary', act: box => { st().accounts.forEach(a => { const v = parseNum(mval(box, 'b_' + a.id)); if (v !== a.balance) { a.balance = v; a.updated = todayISO(); } }); changed(); } }]);
+  },
+  tokenform: () => modal('GitHub-token', `
+    <ol class="small" style="padding-left:18px">
+      <li>Gå til GitHub → Settings → Developer settings → Fine-grained tokens → Generate new token.</li>
+      <li>Repository access: <b>Only select repositories</b> → ${esc(GH.repo)}.</li>
+      <li>Permissions → Repository → <b>Contents: Read and write</b>. Ingenting annet.</li>
+      <li>Sett gjerne utløp til ett år.</li></ol>
+    <label class="f"><span>Token</span><input type="password" name="tok" placeholder="github_pat_..."></label>`,
+    [{ label: 'Lagre og synk', cls: 'primary', act: async box => {
+      const t = mval(box, 'tok').trim(); if (!t) return merr(box, 'Lim inn tokenet.');
+      S.token = t; S.sha = null; await saveToken(); render(); pull(); } }]),
+  tokenclear: async () => { S.token = null; await saveToken(); setSync('', 'Lagret lokalt'); render(); },
+  pull: () => pull(),
+  push: () => push(),
+  pwchange: () => modal('Bytt passord', `<label class="f"><span>Nåværende passord</span><input type="password" name="old"></label>
+    <label class="f"><span>Nytt passord (minst 12 tegn)</span><input type="password" name="n1"></label><label class="f"><span>Gjenta nytt</span><input type="password" name="n2"></label>
+    <p class="small muted">Andre enheter må bruke det nye passordet etterpå. Gamle sikkerhetskopier har fortsatt det gamle passordet.</p>`,
+    [{ label: 'Bytt', cls: 'primary', act: async box => {
+      if (mval(box, 'old') !== S.pw) return merr(box, 'Feil nåværende passord.');
+      const n1 = mval(box, 'n1'); if (n1.length < 12) return merr(box, 'Minst 12 tegn.'); if (n1 !== mval(box, 'n2')) return merr(box, 'Passordene er ulike.');
+      S.pw = n1; await useSalt(b64e(crypto.getRandomValues(new Uint8Array(16))), KDF_ITER); await saveToken(); changed({ now: true });
+    } }]),
+  forget: () => modal('Glem denne enheten?', '<p>Kryptert lokal kopi og token slettes fra denne nettleseren. Dataene på GitHub påvirkes ikke.</p>' + (S.dirty && S.token ? '<p style="color:var(--bad)">Du har endringer som ikke er synket.</p>' : '') + (!S.token ? '<p style="color:var(--bad)">Uten token finnes dataene bare her. Last ned en sikkerhetskopi først.</p>' : ''),
+    [{ label: 'Glem', cls: 'danger', act: () => { Object.values(LS).forEach(k => lsSet(k, null)); location.reload(); } }]),
+  export: async () => download('okonomi-backup-' + todayISO() + '.json', JSON.stringify(await saveLocal())),
+  exportplain: () => modal('Ukryptert eksport', '<p>Filen inneholder alle tallene i klartekst. Ikke last den opp noe sted, og slett den når du er ferdig.</p>',
+    [{ label: 'Last ned', cls: 'primary', act: () => download('okonomi-ukryptert-' + todayISO() + '.json', JSON.stringify(st(), null, 1)) }]),
+};
+function confirmDelPot(p) {
+  setTimeout(() => modal('Slette ' + p.name + '?', `<p>${p.balance ? kr(p.balance) + ' blir stående som ikke fordelt på kontoen. ' : ''}Sparelinjer i åpne budsjetter som peker hit fjernes.</p>`,
+    [{ label: 'Slett', cls: 'danger', act: () => {
+      st().pots = st().pots.filter(x => x !== p);
+      Object.values(st().budgets).forEach(b => { if (!b.closed) b.lines = b.lines.filter(l => l.potId !== p.id); });
+      changed(); } }]), 10);
+}
+function download(name, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
+
+/* ---------- Hendelser ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]');
+  if (t && t.closest('#tabs')) { S.tab = t.dataset.tab; S.budgetEdit = false; lsSet(LS.tab, S.tab); render(); return; }
+  const a = e.target.closest('[data-act]');
+  if (a && ACT[a.dataset.act] && !a.closest('#modal-box .foot')) { if (a.type !== 'checkbox') e.preventDefault(); ACT[a.dataset.act](a, e); }
+});
+document.addEventListener('change', async e => {
+  const el = e.target;
+  if (el.dataset.line) {
+    const l = st().budgets[S.budgetMonth].lines.find(x => x.id === el.dataset.line); if (!l) return;
+    const f = el.dataset.f;
+    if (f === 'amount') { l.amount = parseNum(el.value); el.value = numStr(l.amount); }
+    else if (f === 'potId') { l.potId = el.value || undefined; if (el.value && !l.name) l.name = pot(el.value).name; }
+    else l[f] = el.value;
+    changed({ noRender: true });
+    refreshBudgetSums();
+  }
+  if (el.id === 'horizon') { S.horizon = +el.value; drawProjection(); }
+  if (el.id === 'autolock') { st().settings.autoLockMin = +el.value; changed({ noRender: true }); armLock(); }
+  if (el.id === 'importfile' && el.files[0]) {
+    try {
+      const data = JSON.parse(await el.files[0].text());
+      const imported = isEnvelope(data) ? await openEnv(data, S.pw).catch(() => { throw new Error('Kopien har et annet passord.'); }) : data;
+      if (!imported.accounts) throw new Error('Ukjent filformat.');
+      modal('Importere?', '<p>Alle nåværende data erstattes med innholdet i filen.</p>', [{ label: 'Erstatt', cls: 'danger', act: () => { S.state = migrate(imported); changed(); } }]);
+    } catch (err) { modal('Import feilet', `<p>${esc(err.message)}</p>`); }
+  }
+});
+// formater beløpsfelt i modal ved blur
+document.addEventListener('focusout', e => { if (e.target.matches('#modal-box input.amt')) { const v = parseNum(e.target.value); e.target.value = v ? numStr(v) : ''; } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('#modal').classList.contains('hidden')) closeModal();
+  if (e.key === 'Enter' && e.target.matches('#modal-box input') && !$('#modal').classList.contains('hidden')) { const p = $('#modal-box .btn.primary'); if (p) p.click(); }
+  if (e.key === 'Enter' && e.target.matches('.btable.edit input')) e.target.blur();
+});
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => S.tab === 'oversikt' && drawProjection(), 150); });
+addEventListener('beforeunload', e => { if (S.dirty && S.token) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- Automatisk låsing ---------- */
+function armLock() {
+  clearTimeout(S.lockTimer);
+  const m = S.state?.settings?.autoLockMin; if (!m) return;
+  S.lockTimer = setTimeout(lock, m * 60000);
+}
+['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(ev => addEventListener(ev, () => S.state && armLock(), { passive: true }));
+async function lock() {
+  if (S.dirty) { clearTimeout(S.localTimer); await saveLocal(); if (S.token) await push(); }
+  location.reload(); // tømmer alt fra minnet
+}
+
+/* ============================================================
+   OPPSTART: LÅS OPP ELLER SETT OPP
+   ============================================================ */
+let REMOTE = null; // data.json via GitHub Pages
+(async function boot() {
+  if (!window.crypto?.subtle) { $('#lock-loading').innerHTML = '<p>Nettleseren støtter ikke kryptering. Åpne siden via https.</p>'; return; }
+  REMOTE = await pagesGet();
+  const hasLocal = isEnvelope(lsJSON(LS.vault)), hasRemote = REMOTE.data && isEnvelope(REMOTE.data);
+  $('#lock-loading').classList.add('hidden');
+  if (hasLocal || hasRemote) { $('#lock-unlock').classList.remove('hidden'); $('#pw').focus(); }
+  else { $('#lock-setup').classList.remove('hidden'); if (REMOTE.data && !hasRemote) $('#legacy-warn').classList.remove('hidden'); $('#pw1').focus(); }
+})();
+
+$('#pw').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+$('#btn-unlock').addEventListener('click', unlock);
+async function unlock() {
+  const pw = $('#pw').value; if (!pw) return;
+  const btn = $('#btn-unlock'); btn.disabled = true; btn.textContent = 'Låser opp…'; $('#pw-err').textContent = '';
+  try {
+    const cands = [];
+    const local = lsJSON(LS.vault);
+    if (isEnvelope(local)) { try { cands.push({ env: local, data: await openEnv(local, pw), src: 'local' }); } catch (e) {} }
+    const tokEnv = lsJSON(LS.token);
+    let token = null; if (isEnvelope(tokEnv)) { try { token = (await openEnv(tokEnv, pw)).token; } catch (e) {} }
+    let remoteEnv = null, sha = lsGet(LS.sha);
+    if (token) { try { const g = await ghGet(); if (!g.none) sha = g.sha; if (!g.none && isEnvelope(g.data)) remoteEnv = g.data; } catch (e) {} }
+    if (!remoteEnv && REMOTE?.data && isEnvelope(REMOTE.data)) remoteEnv = REMOTE.data;
+    if (remoteEnv) { try { cands.push({ env: remoteEnv, data: await openEnv(remoteEnv, pw), src: 'remote' }); } catch (e) {} }
+    if (!cands.length) throw new Error('Feil passord.');
+    cands.sort((a, b) => (b.data.savedAt || '').localeCompare(a.data.savedAt || ''));
+    const best = cands[0];
+    S.pw = pw; S.token = token; S.sha = sha;
+    S.state = migrate(best.data);
+    await useSalt(best.env.salt, best.env.iter);
+    await saveLocal(); if (token) await saveToken();
+    startApp();
+    const remoteC = cands.find(c => c.src === 'remote');
+    if (token && (!remoteC || (remoteC.data.savedAt || '') < (S.state.savedAt || ''))) { S.dirty = true; push(); }
+    else setSync(token ? 'ok' : '', token ? 'Synket ' + timeNo() : 'Lagret lokalt');
+  } catch (e) {
+    $('#pw-err').textContent = e.message; btn.disabled = false; btn.textContent = 'Lås opp'; $('#pw').select();
+  }
+}
+$('#btn-setup').addEventListener('click', async () => {
+  const p1 = $('#pw1').value, p2 = $('#pw2').value, err = $('#setup-err'); err.textContent = '';
+  if (p1.length < 12) return err.textContent = 'Passordet må ha minst 12 tegn.';
+  if (p1 !== p2) return err.textContent = 'Passordene er ulike.';
+  let data = emptyState();
+  const f = $('#seedfile').files[0];
+  if (f) {
+    try { const j = JSON.parse(await f.text()); data = isEnvelope(j) ? await openEnv(j, p1) : j; if (!data.accounts) throw 0; }
+    catch (e) { return err.textContent = 'Kunne ikke lese startfilen (feil format eller annet passord).'; }
+  }
+  $('#btn-setup').disabled = true; $('#btn-setup').textContent = 'Krypterer…';
+  S.pw = p1; S.state = migrate(data); S.state.savedAt = new Date().toISOString();
+  await useSalt(b64e(crypto.getRandomValues(new Uint8Array(16))), KDF_ITER);
+  S.token = $('#tok0').value.trim() || null;
+  await saveLocal(); await saveToken();
+  startApp();
+  if (S.token) { S.dirty = true; push(); } else setSync('', 'Lagret lokalt');
+});
+function startApp() {
+  $('#lock').remove();
+  $('#app').classList.remove('hidden');
+  const t = lsGet(LS.tab); if (t && ['oversikt', 'budsjett', 'mal', 'kontoer', 'innst'].includes(t)) S.tab = t;
+  render(); armLock();
+}
+</script>
+</body>
+</html>
