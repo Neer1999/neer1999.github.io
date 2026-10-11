@@ -184,6 +184,28 @@ tr.sum td{font-weight:600;border-bottom:0}
 .newpot{border:1.5px dashed var(--line2);border-radius:16px;background:none;color:var(--text3);cursor:pointer;min-height:180px;font-weight:500}
 .newpot:hover{color:var(--brass);border-color:var(--brass)}
 
+/* ---------- plan ---------- */
+.sub2{font:600 1.15rem/1.2 var(--display);letter-spacing:-.01em;margin:6px 0 14px}
+.sub3{font:600 1rem/1.2 var(--display);margin:22px 0 4px}
+.capbox{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px 4px;margin-bottom:16px}
+.captitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.captitle b{font-weight:600;margin-right:auto}
+.caprow{display:grid;grid-template-columns:28px 170px 150px auto 30px;gap:6px;align-items:center}
+.prows{margin-top:8px}
+.prow{display:grid;grid-template-columns:64px minmax(0,1fr) 150px 140px 160px;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.prow .ord{display:flex}
+.prow .iconbtn:disabled{opacity:.25;cursor:default}
+.prow .who{display:flex;flex-direction:column;min-width:0;gap:2px}
+.prow .who b{display:flex;align-items:center;gap:8px;font-weight:600}
+.ctl{display:flex;flex-direction:column;font-size:.74rem;color:var(--text3)}
+.ctl>span{padding-left:9px}
+.ctl select.inl,.ctl input.inl{font-size:.9rem}
+.ctl.off{opacity:.35}
+.next{display:flex;flex-direction:column}
+.nextrow{display:grid;grid-template-columns:140px 1fr;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.nextrow b{font-weight:500}
+#timeline{margin:6px 0 4px}
+
 /* ---------- kontoer ---------- */
 .acc{display:grid;grid-template-columns:minmax(0,1.4fr) 170px 120px 120px 30px;gap:8px;align-items:center;padding:10px 8px 10px 18px;border-bottom:1px solid var(--line)}
 .acc:last-child{border-bottom:0}
@@ -243,6 +265,12 @@ tr.sum td{font-weight:600;border-bottom:0}
   .pills .pill:not(.zero):not(.left):not(.over){display:none}
   .addline{padding-left:40px}
   .acc{grid-template-columns:minmax(0,1fr) 128px 30px;padding-left:14px}
+  .prow{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .prow .who{grid-row:1;grid-column:1/3}
+  .prow .ord{grid-row:1;grid-column:3;justify-self:end}
+  .caprow{grid-template-columns:24px minmax(0,1fr) minmax(0,1fr) 30px}
+  .caprow .unit{display:none}
+  .nextrow{grid-template-columns:1fr;gap:4px}
   .acc .hs{display:none}
   .f2{grid-template-columns:1fr}
   .hide-sm{display:none}
@@ -335,9 +363,11 @@ const ICON = {
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>',
   left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6 8.5 12l6 6"/></svg>',
   right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 6 6 6-6 6"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14.5 6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9.5 6 6 6-6"/></svg>',
   dots: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>',
 };
-const TABS = [['oversikt', 'Oversikt'], ['budsjett', 'Budsjett'], ['mal', 'Sparemål'], ['kontoer', 'Kontoer'], ['innst', 'Innstillinger']];
+const TABS = [['oversikt', 'Oversikt'], ['budsjett', 'Budsjett'], ['mal', 'Mål'], ['kontoer', 'Kontoer'], ['innst', 'Innstillinger']];
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -518,33 +548,88 @@ function setPotMonthly(p, m) {
   else { ls[0].amount = m; ls.slice(1).forEach(l => l.amount = 0); }
   return true;
 }
+/* ---------- SPAREPLAN ----------
+   Planen bestemmer hvor mye som spares hver måned fremover (kapasitet, med endringer over tid),
+   og fordeler det på målene i prioritert rekkefølge. Mål med «fast beløp» får sitt først,
+   resten fyller målene ovenfra og ned til målbeløpet er nådd. Mål uten målbeløp tar imot alt som er igjen. */
+const kindRank = p => ({ buffer: 0, mal: 1, investering: 2 }[p.kind] ?? 1);
+function planStart() {
+  const pm = planMonth();
+  if (pm && !st().budgets[pm].closed) return pm;
+  const nxt = pm ? ymAdd(pm, 1) : ymNow();
+  return nxt > ymNow() ? nxt : ymNow();
+}
+function ensurePlan() {
+  const s = st();
+  if (!s.plan) {
+    const pm = planMonth(), b = pm ? bsum(pm) : null;
+    s.plan = { capacity: [{ from: planStart(), amount: b ? Math.max(0, Math.round(b.inntekt - b.ut)) : 0 }], order: [], rules: {} };
+  }
+  const P = s.plan;
+  P.order = P.order.filter(id => pot(id));
+  // nye mål legges inn foran investeringsmål uten målbeløp, ellers ville de aldri fått penger
+  const sinkIdx = () => { const i = P.order.findIndex(id => pot(id).kind === 'investering' && !pot(id).target); return i < 0 ? P.order.length : i; };
+  s.pots.filter(p => !P.order.includes(p.id)).sort((a, b) => kindRank(a) - kindRank(b)).forEach(p => {
+    if (!P.rules[p.id]) P.rules[p.id] = { mode: 'auto', amount: 0, start: null };
+    P.order.splice(p.kind === 'investering' ? P.order.length : sinkIdx(), 0, p.id);
+  });
+  Object.keys(P.rules).forEach(id => { if (!pot(id)) delete P.rules[id]; });
+  P.capacity.sort((a, b) => a.from.localeCompare(b.from));
+  if (P.capacity[0]) P.capacity[0].from = planStart() < P.capacity[0].from ? planStart() : P.capacity[0].from;
+  return P;
+}
+const capAt = (P, ym) => { let v = 0; P.capacity.forEach(c => { if (c.from <= ym) v = c.amount; }); return v; };
+function simulate(months = 360) {
+  const P = ensurePlan(), start = planStart(), order = P.order.map(pot).filter(Boolean);
+  const bal = {}, reached = {}, firstIn = {}, vals = {}, alloc = [], unplanned = [], labels = [];
+  order.forEach(p => { bal[p.id] = p.balance; vals[p.id] = []; if (p.target && p.balance >= p.target) reached[p.id] = 'nå'; });
+  for (let i = 0; i < months; i++) {
+    const ym = ymAdd(start, i); labels.push(ym);
+    let avail = capAt(P, ym); const a = {};
+    order.forEach(p => { const r = Math.pow(1 + (p.returnPct || 0) / 100, 1 / 12) - 1; bal[p.id] *= 1 + r; });
+    const room = p => p.target ? Math.max(0, p.target - bal[p.id]) : Infinity;
+    const active = p => { const R = P.rules[p.id]; return !(R.start && ym < R.start) && room(p) > 0.5; };
+    order.forEach(p => { const R = P.rules[p.id]; if (R.mode === 'fixed' && active(p)) { const g = Math.max(0, Math.min(R.amount || 0, room(p), avail)); if (g) { a[p.id] = g; avail -= g; } } });
+    order.forEach(p => { const R = P.rules[p.id]; if (R.mode !== 'fixed' && active(p) && avail > 0.5) { const g = Math.min(avail, room(p)); a[p.id] = (a[p.id] || 0) + g; avail -= g; } });
+    order.forEach(p => {
+      if (a[p.id]) { bal[p.id] += a[p.id]; if (!(p.id in firstIn)) firstIn[p.id] = ym; }
+      if (p.target && bal[p.id] >= p.target - 0.5 && !(p.id in reached)) reached[p.id] = ym;
+      vals[p.id].push(bal[p.id]);
+    });
+    alloc.push(a); unplanned.push(Math.max(0, avail));
+  }
+  return { P, start, labels, vals, alloc, unplanned, reached, firstIn, order };
+}
+const sim = () => S.sim || (S.sim = simulate());
+const planNow = p => Math.round(sim().alloc[0]?.[p.id] || 0);
+/** Setter sparelinjene i et budsjett til planens fordeling for den måneden. */
+function applyPlanToMonth(ym, R = simulate()) {
+  const i = ymDiff(R.start, ym), b = st().budgets[ym];
+  if (i < 0 || !b || b.closed) return false;
+  const a = R.alloc[i] || {};
+  R.order.forEach(p => {
+    const amt = Math.round(a[p.id] || 0), ls = b.lines.filter(l => l.cat === 'sparing' && l.potId === p.id);
+    if (ls.length) { ls[0].amount = amt; ls.slice(1).forEach(l => l.amount = 0); }
+    else if (amt) b.lines.push({ id: uid('l'), cat: 'sparing', name: p.name, amount: amt, done: false, potId: p.id });
+  });
+  return true;
+}
 function potStatus(p) {
-  const m = potMonthly(p), out = { pct: null, text: '', cls: '' };
-  if (!p.target) { out.text = m ? 'Sparer ' + kr(m) + ' i måneden' : 'Ingen fast sparing ennå'; return out; }
-  const rest = p.target - p.balance; out.pct = Math.max(0, Math.min(100, p.balance / p.target * 100));
-  if (rest <= 0) { out.text = 'Målet er nådd'; out.cls = 'good'; return out; }
-  const base = planMonth() || ymNow();
+  const R = sim(), out = { pct: null, text: '', cls: '' }, now = planNow(p);
+  if (!p.target) { out.text = now ? kr(now) + ' i måneden etter planen' : 'Får ingenting i planen nå'; return out; }
+  out.pct = Math.max(0, Math.min(100, p.balance / p.target * 100));
+  if (p.balance >= p.target - 0.5) { out.text = 'Målet er nådd'; out.cls = 'good'; return out; }
+  const r = R.reached[p.id];
   if (p.targetDate) {
-    const months = Math.max(1, ymDiff(base, p.targetDate) + 1), need = rest / months;
-    if (ymDiff(ymNow(), p.targetDate) < 0) { out.text = 'Fristen er passert, mangler ' + kr(rest); out.cls = 'bad'; }
-    else if (m >= need - 1) { out.text = 'I rute, trenger ' + kr(need) + ' i måneden'; out.cls = 'good'; }
-    else { out.text = 'Trenger ' + kr(need) + ' i måneden for å nå fristen'; out.cls = 'warn'; }
-  } else if (m > 0) out.text = 'Nås rundt ' + ymLabel(ymAdd(base, Math.ceil(rest / m) - 1)).toLowerCase();
-  else { out.text = 'Mangler ' + kr(rest) + ', ingen fast sparing'; out.cls = 'warn'; }
+    if (r && r <= p.targetDate) { out.text = 'Nås ' + ymLabel(r).toLowerCase() + ', før fristen'; out.cls = 'good'; }
+    else { out.text = r ? 'Nås ' + ymLabel(r).toLowerCase() + ', etter fristen' : 'Nås ikke med planen'; out.cls = 'warn'; }
+  } else if (r) out.text = 'Nås ' + ymLabel(r).toLowerCase();
+  else { out.text = 'Nås ikke med planen'; out.cls = 'warn'; }
   return out;
 }
 function project(months) {
-  const start = planMonth() || ymNow(), labels = [], series = st().pots.map(p => ({ p, vals: [] }));
-  for (let i = 0; i <= months; i++) labels.push(ymAdd(start, i));
-  series.forEach(s => {
-    const r = Math.pow(1 + (s.p.returnPct || 0) / 100, 1 / 12) - 1, m = potMonthly(s.p);
-    let b = s.p.balance;
-    for (let i = 0; i <= months; i++) {
-      s.vals.push(b); b = b * (1 + r) + m;
-      if (s.p.target && s.p.kind !== 'investering' && b > s.p.target) b = Math.max(s.p.target, s.vals[s.vals.length - 1]);
-    }
-  });
-  return { labels, series };
+  const R = sim(), labels = R.labels.slice(0, months + 1);
+  return { labels, series: R.order.map(p => ({ p, vals: R.vals[p.id].slice(0, months + 1) })) };
 }
 
 /* ---------- budsjett ---------- */
@@ -554,6 +639,7 @@ function createMonth(ym) {
   const lines = from ? from.lines.map(l => ({ ...l, id: uid('l'), done: false })) : [];
   st().pots.forEach(p => { if (!lines.some(l => l.potId === p.id)) lines.push({ id: uid('l'), cat: 'sparing', name: p.name, amount: 0, done: false, potId: p.id }); });
   st().budgets[ym] = { closed: false, lines };
+  S.sim = null; applyPlanToMonth(ym); // sparingen hentes fra planen
 }
 function closeMonth(ym, overrides = {}) {
   const b = st().budgets[ym]; const applied = [];
@@ -620,10 +706,12 @@ function renderKeepFocus() {
 }
 function render() {
   if (!S.state) return;
+  S.sim = null;
   $('#tabs').innerHTML = TABS.map(([id, l]) => `<button data-tab="${id}" class="${S.tab === id ? 'on' : ''}">${ICON[id]}<span>${l}</span></button>`).join('');
   const fn = { oversikt: viewOverview, budsjett: viewBudget, mal: viewPots, kontoer: viewAccounts, innst: viewSettings }[S.tab];
   $('#view').innerHTML = fn();
   if (S.tab === 'oversikt') drawProjection();
+  if (S.tab === 'mal') drawTimeline();
 }
 function goTab(t) { S.tab = t; lsSet(LS.tab, t); render(); scrollTo(0, 0); }
 
@@ -775,28 +863,112 @@ function viewBudget() {
       <input class="inl amt num" type="text" inputmode="decimal" data-line="${l.id}" data-f="amount" data-k="a:${l.id}" value="${esc(numStr(l.amount))}" placeholder="0" autocomplete="off" aria-label="Beløp" ${roA}>
       ${ro ? '<span></span>' : `<button class="iconbtn del" data-act="dline" data-id="${l.id}" tabindex="-1" aria-label="Slett linje" title="Slett linje">${ICON.x}</button>`}
     </div>`).join('');
-    return `<section class="bsec"><header><h3><i class="sw" style="background:${c.color}"></i>${c.label}</h3>${lines.length && !ro ? `<span class="done">${done} av ${lines.length} krysset av</span>` : ''}<span class="num">${kr(tot)}</span></header>
+    return `<section class="bsec"><header><h3><i class="sw" style="background:${c.color}"></i>${c.label}</h3>${lines.length && !ro ? `<span class="done">${done} av ${lines.length} krysset av</span>` : ''}${sp && !ro ? `<button class="btn sm ghost" data-act="plantobudget" data-ym="${ym}">Hent fra planen</button>` : ''}<span class="num">${kr(tot)}</span></header>
       ${rows}${ro ? '' : `<button class="addline" data-act="aline" data-cat="${c.id}">+ Ny linje</button>`}</section>`;
   }).join('');
   return bar + banner + secs + (ro ? '' : `<p class="small muted">Klikk på et navn eller beløp for å endre det. Enter hopper til neste beløp. Kryss av når regningen er betalt eller pengene er overført.</p>`);
 }
 
+/* ---------- MÅL OG PLAN ---------- */
+function viewPlan() {
+  const R = sim(), P = R.P, pm = planMonth(), pb = pm ? bsum(pm) : null, room = pb ? Math.round(pb.inntekt - pb.ut) : null;
+  const cap0 = capAt(P, R.start), unpl = Math.round(R.unplanned[0] || 0);
+  const budOpen = st().budgets[R.start] && !st().budgets[R.start].closed;
+  const budSp = budOpen ? bsum(R.start).sparing : null, planSp = Math.round(sum(Object.values(R.alloc[0] || {})));
+  const rows = R.order.map((p, i) => {
+    const rule = P.rules[p.id], ps = potStatus(p), now = planNow(p);
+    return `<div class="prow" style="--c:${potColor(p)}">
+      <div class="ord"><button class="iconbtn" data-act="pmove" data-id="${p.id}" data-d="-1" ${i ? '' : 'disabled'} aria-label="Flytt opp" title="Flytt opp">${ICON.up}</button><button class="iconbtn" data-act="pmove" data-id="${p.id}" data-d="1" ${i < R.order.length - 1 ? '' : 'disabled'} aria-label="Flytt ned" title="Flytt ned">${ICON.down}</button></div>
+      <div class="who"><b><i class="sw" style="background:${potColor(p)}"></i>${esc(p.name)}</b><span class="small ${ps.cls === 'good' ? 'pos' : ps.cls === 'warn' ? 'warn' : 'muted'}">${p.target ? ps.text : (now ? kr(now) + ' nå' : 'Tar imot det som er igjen')}</span>
+        ${!p.target && rule.mode !== 'fixed' && i < R.order.length - 1 ? `<span class="small warn">Har ikke målbeløp og tar alt, så målene under får ingenting.${p.kind === 'buffer' && pb && pb.ut ? ` <button class="btn sm ghost" style="padding:0 4px;color:var(--brass);text-decoration:underline" data-act="buftarget" data-id="${p.id}" data-v="${Math.round(pb.ut * 3 / 1000) * 1000}">Sett målet til 3 måneders utgifter, ${kr(Math.round(pb.ut * 3 / 1000) * 1000)}</button>` : ''}</span>` : ''}</div>
+      <label class="ctl"><span>Hvordan</span><select class="inl" data-prule="mode" data-id="${p.id}" data-k="pr:m:${p.id}"><option value="auto" ${rule.mode !== 'fixed' ? 'selected' : ''}>Etter tur</option><option value="fixed" ${rule.mode === 'fixed' ? 'selected' : ''}>Fast beløp</option></select></label>
+      <label class="ctl ${rule.mode === 'fixed' ? '' : 'off'}"><span>Per måned</span><input class="inl amt num" type="text" inputmode="decimal" data-prule="amount" data-id="${p.id}" data-k="pr:a:${p.id}" value="${esc(numStr(rule.amount))}" placeholder="0" ${rule.mode === 'fixed' ? '' : 'disabled'}></label>
+      <label class="ctl"><span>Start</span><select class="inl" data-prule="start" data-id="${p.id}" data-k="pr:s:${p.id}" aria-label="Start">${monthOptions(R.start, rule.start, 'Nå')}</select></label>
+    </div>`; }).join('');
+  const caps = P.capacity.map((c, i) => `<div class="caprow">
+      <span class="muted small">${i ? 'Fra' : ''}</span>${i ? `<select class="inl" data-cap="from" data-i="${i}" data-k="cap:f:${i}" aria-label="Fra måned">${monthOptions(ymAdd(R.start, 1), c.from)}</select>` : `<span class="small" style="padding-left:9px">Fra nå</span>`}
+      <input class="inl amt num" type="text" inputmode="decimal" data-cap="amount" data-i="${i}" data-k="cap:a:${i}" value="${esc(numStr(c.amount))}" placeholder="0" aria-label="Beløp per måned"><span class="muted small unit">kr i måneden</span>
+      ${P.capacity.length > 1 ? `<button class="iconbtn" data-act="capdel" data-i="${i}" aria-label="Fjern" title="Fjern">${ICON.x}</button>` : '<span></span>'}</div>`).join('');
+  const next = R.labels.slice(0, 6).map((ym, i) => {
+    const a = R.alloc[i]; const chips = R.order.filter(p => a[p.id] > 0.5).map(p => `<span class="chip"><i class="sw" style="background:${potColor(p)}"></i>${esc(p.name)} ${kr(a[p.id])}</span>`).join('');
+    return `<div class="nextrow"><b>${ymLabel(ym)}</b><div class="row" style="gap:6px">${chips || '<span class="muted small">Ingenting planlagt</span>'}${R.unplanned[i] > 0.5 ? `<span class="chip warn">Uten mål ${kr(R.unplanned[i])}</span>` : ''}</div></div>`; }).join('');
+  return `<section class="panel plan" style="margin-bottom:18px">
+    <h2>Spareplan<span class="sp"></span>${budOpen ? `<button class="btn sm ${Math.abs(budSp - planSp) > 1 ? 'primary' : ''}" data-act="plantobudget">Bruk i budsjettet for ${ymName(R.start).toLowerCase()}</button>` : ''}</h2>
+    <p class="small muted" style="margin:-6px 0 16px;max-width:72ch">Velg hvor mye dere kan spare i måneden og rekkefølgen på målene. «Fast beløp» får sitt først. Resten går «etter tur», ovenfra og ned, til hvert mål er fullt. Nye måneder i budsjettet får sparingen fra planen automatisk.</p>
+    <div class="capbox">
+      <div class="captitle"><b>Til sparing hver måned</b>${room != null && Math.abs(room - cap0) > 1 && P.capacity.length === 1 ? `<span class="small muted">Budsjettet for ${ymName(pm).toLowerCase()} gir rom for ${kr(room)}.</span><button class="btn sm ghost" data-act="capfrombudget" data-v="${room}">Bruk ${kr(room)}</button>` : ''}</div>
+      ${caps}
+      <button class="addline" style="padding-left:0" data-act="capadd">+ Endre beløpet fra en senere måned</button>
+    </div>
+    ${unpl > 0 ? `<div class="callout" style="margin:0 0 14px"><span class="sp">${kr(unpl)} i måneden har ingen mål å gå til. Legg til et mål uten målbeløp, for eksempel Investeringer, så får pengene en jobb.</span></div>` : ''}
+    ${budOpen && Math.abs(budSp - planSp) > 1 ? `<div class="callout info" style="margin:0 0 14px"><span class="sp">Budsjettet for ${ymName(R.start).toLowerCase()} har ${kr(budSp)} til mål. Planen sier ${kr(planSp)}.</span></div>` : ''}
+    <div class="chart" id="timeline"></div>
+    <div class="prows">${rows || '<p class="muted">Ingen mål ennå.</p>'}</div>
+    <h3 class="sub3">De neste månedene</h3>
+    <div class="next">${next}</div>
+  </section>`;
+}
+function drawTimeline() {
+  const el = $('#timeline'); if (!el) return;
+  const R = sim(), rows = R.order; if (!rows.length) { el.innerHTML = ''; return; }
+  const idx = ym => ym && ym !== 'nå' ? ymDiff(R.start, ym) : null;
+  let end = 11;
+  rows.forEach(p => { [idx(R.reached[p.id]), idx(p.targetDate), idx(R.firstIn[p.id]), idx(P_rule(R, p).start)].forEach(v => { if (v != null && v > end) end = v; }); });
+  end = Math.min(R.labels.length - 1, end + 3);
+  const W = el.clientWidth || 700, lw = W < 520 ? 0 : 130, rh = W < 520 ? 46 : 38, top = 26, H = top + rows.length * rh + 6;
+  const x = i => lw + (W - lw - 8) * (i / (end + 1));
+  let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}">`;
+  for (let i = 0; i <= end; i++) { const ym = R.labels[i]; if (i === 0 || ym.endsWith('-01')) {
+    svg += `<line x1="${x(i)}" x2="${x(i)}" y1="${top - 6}" y2="${H}" stroke="var(--line)"/><text x="${x(i) + 4}" y="${top - 10}" font-size="11" fill="var(--text3)">${i === 0 ? ymLabel(ym, true) : ym.slice(0, 4)}</text>`; } }
+  rows.forEach((p, r) => {
+    const y = top + r * rh + (W < 520 ? 22 : rh / 2), c = potColor(p), f = idx(R.firstIn[p.id]), re = R.reached[p.id], ri = idx(re), dl = idx(p.targetDate);
+    if (lw) svg += `<text x="0" y="${y + 4}" font-size="13" fill="var(--text)">${esc(p.name.length > 16 ? p.name.slice(0, 15) + '…' : p.name)}</text>`;
+    else svg += `<text x="0" y="${y - 10}" font-size="12" fill="var(--text2)">${esc(p.name)}</text>`;
+    svg += `<line x1="${x(0)}" x2="${x(end + 1)}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 4"/>`;
+    let label = '', lx = null;
+    if (re === 'nå') label = 'Nådd';
+    else if (f != null) {
+      const e = ri != null ? ri + 1 : end + 1;
+      svg += `<rect x="${x(f)}" y="${y - 6}" width="${Math.max(4, x(e) - x(f))}" height="12" rx="6" fill="${c}"><title>${esc(p.name)}: ${ymLabel(R.labels[f])} til ${ri != null ? ymLabel(re) : 'videre'}</title></rect>`;
+      if (ri != null) { svg += `<circle cx="${x(e)}" cy="${y}" r="5" fill="var(--surface)" stroke="${c}" stroke-width="2.5"/>`; label = ymLabel(re, true); }
+      else if (!p.target) label = '';
+      else label = 'nås ikke';
+      lx = ri != null ? x(e) + 10 : null;
+    } else label = p.target ? 'venter' : 'ingenting ennå';
+    if (dl != null && dl >= 0 && dl <= end) { const late = !(ri != null && ri <= dl) && re !== 'nå'; svg += `<line x1="${x(dl + 1)}" x2="${x(dl + 1)}" y1="${y - 11}" y2="${y + 11}" stroke="${late ? 'var(--coral)' : 'var(--brass)'}" stroke-width="2"><title>Frist ${ymLabel(p.targetDate)}</title></line>`; }
+    let tx = lx != null ? lx : (f != null ? Math.min(x(end + 1) - 60, x(f) + 8) : x(0) + 6), anchor = 'start';
+    let ty = y + 4;
+    if (!lw) { tx = W - 2; anchor = 'end'; ty = y - 10; } // mobil: dato på samme linje som navnet
+    else if (lx != null && lx + 46 > W) { tx = lx - 20; anchor = 'end'; }
+    if (label) svg += `<text x="${tx}" text-anchor="${anchor}" y="${ty}" font-size="12" fill="${label === 'nås ikke' ? 'var(--coral)' : 'var(--text2)'}" stroke="var(--surface)" stroke-width="4" paint-order="stroke">${label}</text>`;
+  });
+  el.innerHTML = svg + '</svg>';
+}
+const P_rule = (R, p) => R.P.rules[p.id] || {};
+function monthOptions(from, sel, nowLabel) {
+  let o = nowLabel ? `<option value="" ${!sel || sel <= from ? 'selected' : ''}>${nowLabel}</option>` : '';
+  for (let i = nowLabel ? 1 : 0; i < 72; i++) { const ym = ymAdd(from, i); o += `<option value="${ym}" ${ym === sel ? 'selected' : ''}>${ymLabel(ym)}</option>`; }
+  if (sel && sel > ymAdd(from, 71)) o += `<option value="${sel}" selected>${ymLabel(sel)}</option>`;
+  return o;
+}
+
 /* ---------- SPAREMÅL ---------- */
 function viewPots() {
-  const t = totals(), pm = planMonth(), pmOpen = pm && !st().budgets[pm].closed;
-  return `<div class="pagehead"><h1>Sparemål</h1><span class="sp"></span>
+  const t = totals();
+  return `<div class="pagehead"><h1>Mål og plan</h1><span class="sp"></span>
     ${t.free > 0.5 ? `<button class="btn sm primary" data-act="distribute">Fordel ${kr(t.free)}</button>` : ''}
-    <button class="btn sm" data-act="transfer">Flytt mellom mål</button></div>
-  <p class="muted small" style="margin:-10px 0 18px;max-width:70ch">Et mål er en del av saldoen på en konto som er satt av til noe bestemt, som konvolutter i samme skuff. Beløpet per måned hører til budsjettet for ${pm ? ymName(pm).toLowerCase() : 'måneden'} og legges til på målet når måneden avsluttes.</p>
-  <div class="pots">${st().pots.map(p => {
-    const ps = potStatus(p), a = acc(p.accountId), m = potMonthly(p);
+    <button class="btn sm" data-act="transfer">Flytt mellom mål</button><button class="btn sm" data-act="potform">+ Nytt mål</button></div>
+  ${viewPlan()}
+  <h2 class="sub2">Saldo per mål</h2>
+  <div class="pots">${sim().order.map(p => {
+    const ps = potStatus(p), a = acc(p.accountId), now = planNow(p);
     return `<article class="pot" style="--c:${potColor(p)}">
       <div class="top"><b>${esc(p.name)}</b><span class="chip">${POT_KINDS[p.kind] || ''}</span></div>
       <div class="bal num">${kr(p.balance)}${p.target ? `<small>av ${kr(p.target)}</small>` : ''}</div>
       ${ps.pct != null ? `<div class="bar"><i style="width:${ps.pct}%;background:${potColor(p)}"></i></div>` : ''}
-      ${ps.cls ? `<div><span class="chip ${ps.cls}">${ps.text}</span></div>` : !p.target && m ? '' : `<div class="small muted">${ps.text}</div>`}
+      ${p.target ? `<div><span class="chip ${ps.cls}">${ps.text}</span></div>` : ''}
       <div class="kv">
-        <span>Per måned</span>${pmOpen ? `<input class="inl amt num" type="text" inputmode="decimal" data-potm="${p.id}" data-k="pm:${p.id}" value="${esc(numStr(m))}" placeholder="0" aria-label="Sparing per måned til ${esc(p.name)}">` : `<span class="num">${kr(m)}</span>`}
+        <span>Etter planen nå</span><span class="num">${kr(now)} i måneden</span>
         ${p.targetDate ? `<span>Frist</span><span>${ymLabel(p.targetDate)}</span>` : ''}
         ${p.returnPct ? `<span>Avkastning</span><span>${String(p.returnPct).replace('.', ',')} % i året</span>` : ''}
         <span>Konto</span><span>${a ? esc(a.name) : 'Ingen'}</span>
@@ -852,6 +1024,16 @@ function viewSettings() {
    ============================================================ */
 const curB = () => st().budgets[S.budgetMonth];
 const ACT = {
+  pmove: el => { const P = ensurePlan(), i = P.order.indexOf(el.dataset.id), j = i + +el.dataset.d; if (j < 0 || j >= P.order.length) return; [P.order[i], P.order[j]] = [P.order[j], P.order[i]]; changed(); },
+  capadd: () => { const P = ensurePlan(), last = P.capacity[P.capacity.length - 1], base = last.from > planStart() ? last.from : planStart(); P.capacity.push({ from: ymAdd(base, 6), amount: last.amount }); changed(); },
+  buftarget: el => { const p = pot(el.dataset.id); p.target = +el.dataset.v; changed(); toast(p.name + ' har fått målbeløp ' + kr(p.target)); },
+  capdel: el => { const P = ensurePlan(); P.capacity.splice(+el.dataset.i, 1); changed(); },
+  capfrombudget: el => { ensurePlan().capacity[0].amount = +el.dataset.v; changed(); },
+  plantobudget: el => {
+    const R = simulate(), ym = el.dataset.ym || R.start;
+    if (ym < R.start) return toast('Planen starter ' + ymLabel(R.start).toLowerCase());
+    checkpoint(); if (applyPlanToMonth(ym, R)) { changed(); toast('Sparingen for ' + ymName(ym).toLowerCase() + ' er hentet fra planen', true); }
+  },
   goto: el => goTab(el.dataset.tab),
   gotomonth: el => { S.budgetMonth = el.dataset.ym; goTab('budsjett'); },
   lock: () => lock(),
@@ -910,7 +1092,6 @@ const ACT = {
         <label class="f"><span>Ligger på konto</span><select name="acc">${accOptions(p?.accountId, true)}</select></label>
         <label class="f"><span>Målbeløp (valgfritt)</span>${amtInput('target', p?.target)}</label>
         <label class="f"><span>Frist (valgfritt)</span><input type="month" name="date" value="${esc(p?.targetDate || '')}"></label>
-        ${pmOpen ? `<label class="f"><span>Per måned fra ${ymName(pm).toLowerCase()}</span>${amtInput('monthly', p ? potMonthly(p) : 0)}</label>` : ''}
         <label class="f"><span>Forventet avkastning, % i året</span><input type="text" inputmode="decimal" name="ret" value="${esc(p?.returnPct ? String(p.returnPct).replace('.', ',') : '')}" placeholder="0"></label>
       </div>
       ${p ? '' : `<label class="f"><span>Startbeløp, tas fra det som ikke er fordelt</span>${amtInput('start', 0)}</label>`}
@@ -926,7 +1107,6 @@ const ACT = {
         Object.assign(q, { name, kind: mval(box, 'kind'), accountId: mval(box, 'acc'), target: parseNum(mval(box, 'target')) || null,
           targetDate: mval(box, 'date') || null, returnPct: parseNum(mval(box, 'ret')), note: mval(box, 'note').trim(), color: mval(box, 'color') });
         if (!p) st().pots.push(q);
-        if (pmOpen) setPotMonthly(q, parseNum(mval(box, 'monthly')));
         Object.values(st().budgets).forEach(b => { if (!b.closed) b.lines.forEach(l => { if (l.potId === q.id) l.name = q.name; }); });
         changed(); toast(p ? 'Lagret' : `«${name}» er laget`);
       } }]);
@@ -1045,6 +1225,16 @@ document.addEventListener('change', async e => {
     else l[f] = el.value.trim();
     changed({ soft: f === 'amount' || f === 'potId', noRender: f === 'name' || f === 'note' });
   }
+  if (el.dataset.prule) {
+    const R = ensurePlan().rules[el.dataset.id], f = el.dataset.prule;
+    if (f === 'mode') R.mode = el.value; else if (f === 'amount') R.amount = parseNum(el.value); else R.start = el.value || null;
+    changed({ soft: true });
+  }
+  if (el.dataset.cap) {
+    const c = ensurePlan().capacity[+el.dataset.i];
+    if (el.dataset.cap === 'amount') c.amount = parseNum(el.value); else if (el.value) c.from = el.value;
+    changed({ soft: true });
+  }
   if (el.dataset.potm) { const p = pot(el.dataset.potm); if (setPotMonthly(p, parseNum(el.value))) changed({ soft: true }); }
   if (el.dataset.accbal) { const a = acc(el.dataset.accbal), v = Math.abs(parseNum(el.value)); if (v !== a.balance) { a.balance = v; a.updated = todayISO(); changed({ soft: true }); } else el.value = (a.type === 'gjeld' && a.balance ? '-' : '') + numStr(a.balance); }
   if (el.id === 'horizon') { S.horizon = +el.value; drawProjection(); }
@@ -1066,13 +1256,13 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches('input.inl')) {
     e.preventDefault();
     // Enter hopper til neste beløp, som i et regneark
-    const all = $$('.inl.amt:not([readonly])'), i = all.indexOf(e.target);
-    if (i > -1) { if (all[i + 1]) all[i + 1].focus(); else e.target.blur(); }
+    const all = $$('.inl.amt:not([readonly]):not(:disabled)'), i = all.indexOf(e.target);
+    if (i > -1) { if (all[i + 1]) all[i + 1].focus(); if (document.activeElement === e.target) e.target.blur(); }
     else if (e.target.dataset.f === 'name') { const a2 = $(`[data-k="a:${e.target.dataset.line}"]`); a2 ? a2.focus() : e.target.blur(); }
     else e.target.blur();
   }
 });
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => S.tab === 'oversikt' && drawProjection(), 150); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.tab === 'oversikt') drawProjection(); if (S.tab === 'mal') drawTimeline(); }, 150); });
 addEventListener('beforeunload', e => { if (S.dirty && S.token) { push(); e.preventDefault(); e.returnValue = ''; } });
 
 /* ---------- automatisk låsing ---------- */

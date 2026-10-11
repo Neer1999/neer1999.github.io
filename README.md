@@ -26,11 +26,13 @@ Passordet kan ikke gjenopprettes. Bruk en lang setning, fire til fem tilfeldige 
 
 **Sparemål** er konvolutter inne i en konto: Buffer, Bil, Barn, Investeringer osv. Summen av målene på en konto skal være lik saldoen. Det som ikke er fordelt vises tydelig, så hver krone har en jobb.
 
+**Spareplan** (under Mål) bestemmer hvor mye som spares fremover: et beløp per måned, med endringer fra bestemte måneder. Målene fylles i prioritert rekkefølge, eller med fast beløp, og kan ha en startmåned. Tidslinjen viser når hvert mål nås og om fristen holder.
+
 **Budsjett** er per måned og nullbasert: inntekter minus utgifter minus sparing skal bli 0. Sparelinjene peker på et sparemål, og det er her den månedlige sparingen bestemmes.
 
 ### Månedsrytme
 
-1. Ny måned: Budsjett → › → *Lag budsjett ved å kopiere forrige*.
+1. Ny måned: Budsjett → › → *Lag budsjett*. Linjene kopieres fra forrige måned, og sparingen hentes fra planen.
 2. Klikk på beløpene og skriv nye tall rett inn. Fordel det som er igjen til mål.
 3. Overfør pengene i nettbanken og kryss av linjene.
 4. *Avslutt måned*: velg hvor mye som skal legges til på hvert mål. Formuen lagres i historikken.
