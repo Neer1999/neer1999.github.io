@@ -447,12 +447,14 @@ function createMonth(ym) {
   st().pots.forEach(p => { if (!lines.some(l => l.potId === p.id)) lines.push({ id: uid('l'), cat: 'sparing', name: p.name, amount: 0, done: false, potId: p.id }); });
   st().budgets[ym] = { closed: false, lines };
 }
-function closeMonth(ym) {
+/** overrides: { lineId: beløp } når noe av sparingen allerede står på målet og ikke skal legges til igjen */
+function closeMonth(ym, overrides = {}) {
   const b = st().budgets[ym]; const applied = [];
-  b.lines.filter(l => l.cat === 'sparing' && l.potId && l.amount).forEach(l => {
+  b.lines.filter(l => l.cat === 'sparing' && l.potId).forEach(l => {
     const p = pot(l.potId); if (!p) return;
-    p.balance += l.amount; const a = acc(p.accountId); if (a) { a.balance += l.amount; a.updated = todayISO(); }
-    applied.push({ potId: p.id, accountId: p.accountId, amount: l.amount });
+    const amt = l.id in overrides ? overrides[l.id] : l.amount; if (!amt) return;
+    p.balance += amt; const a = acc(p.accountId); if (a) { a.balance += amt; a.updated = todayISO(); }
+    applied.push({ potId: p.id, accountId: p.accountId, amount: amt });
   });
   b.closed = true; b.closedAt = new Date().toISOString(); b.applied = applied;
   const t = totals();
@@ -773,14 +775,17 @@ const ACT = {
   closemonth: () => {
     const ym = S.budgetMonth, b = st().budgets[ym], s = bsum(ym);
     const sp = b.lines.filter(l => l.cat === 'sparing' && l.amount);
-    const noPot = sp.filter(l => !l.potId || !pot(l.potId));
+    const noPot = sp.filter(l => !l.potId || !pot(l.potId)), withPot = sp.filter(l => l.potId && pot(l.potId));
     modal('Avslutt ' + ymLabel(ym).toLowerCase(), `
-      <p>Når måneden avsluttes legges sparingen til på målene og på kontoene de ligger på. Gjør overføringene i nettbanken først.</p>
-      <table><tbody>${sp.filter(l => l.potId && pot(l.potId)).map(l => `<tr><td>${esc(pot(l.potId).name)} <span class="muted small">på ${esc(acc(pot(l.potId).accountId)?.name || '?')}</span></td><td class="n">${krs(l.amount)}</td></tr>`).join('') || '<tr><td class="muted">Ingen sparing til mål denne måneden</td></tr>'}</tbody></table>
+      <p>Beløpene under legges til på målene og på kontoen de ligger på. Gjør overføringene i nettbanken først.</p>
+      <p class="small muted">Står noe av pengene allerede på målet (fordelt tidligere)? Skriv bare det som kommer i tillegg nå, eller 0. Budsjettet for måneden endres ikke.</p>
+      <table><thead><tr><th>Mål</th><th class="n">Planlagt</th><th class="n">Legg til nå</th></tr></thead><tbody>${withPot.map(l => `<tr><td>${esc(pot(l.potId).name)}<span class="note">på ${esc(acc(pot(l.potId).accountId)?.name || '?')}</span></td><td class="n">${kr(l.amount)}</td><td style="width:130px">${amtInput('c_' + l.id, l.amount)}</td></tr>`).join('') || '<tr><td class="muted" colspan="3">Ingen sparing til mål denne måneden</td></tr>'}
+      ${withPot.length ? `<tr class="sum"><td>Totalt</td><td class="n">${kr(sum(withPot, l => l.amount))}</td><td class="n" id="close-tot">${kr(sum(withPot, l => l.amount))}</td></tr>` : ''}</tbody></table>
       ${noPot.length ? `<p class="small" style="color:var(--warn)">${noPot.length} sparelinje(r) mangler mål og blir ikke bokført.</p>` : ''}
       ${Math.abs(s.left) > 0.5 ? `<p class="small" style="color:var(--warn)">Merk: ${kr(s.left)} er ikke fordelt i budsjettet.</p>` : ''}
       <p class="small muted">Et øyeblikksbilde av formuen lagres i historikken. Du kan gjenåpne måneden senere.</p>`,
-      [{ label: 'Avslutt og bokfør', cls: 'primary', act: () => { closeMonth(ym); S.budgetEdit = false; changed(); } }]);
+      [{ label: 'Avslutt og bokfør', cls: 'primary', act: box => { const ov = {}; withPot.forEach(l => ov[l.id] = parseNum(mval(box, 'c_' + l.id))); closeMonth(ym, ov); S.budgetEdit = false; changed(); } }]);
+    $('#modal-box .mbody').addEventListener('input', () => { const el = $('#close-tot'); if (el) el.textContent = kr(sum(withPot, l => parseNum(mval($('#modal-box'), 'c_' + l.id)))); });
   },
   reopen: () => modal('Gjenåpne ' + ymLabel(S.budgetMonth).toLowerCase() + '?', '<p>Sparingen som ble bokført trekkes tilbake fra målene og kontoene, og øyeblikksbildet slettes.</p>',
     [{ label: 'Gjenåpne', cls: 'primary', act: () => { reopenMonth(S.budgetMonth); changed(); } }]),
