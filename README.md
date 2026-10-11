@@ -31,10 +31,10 @@ Passordet kan ikke gjenopprettes. Bruk en lang setning, fire til fem tilfeldige 
 ### Månedsrytme
 
 1. Ny måned: Budsjett → › → *Lag budsjett ved å kopiere forrige*.
-2. Juster beløpene (Rediger). Fordel det som er igjen til mål.
+2. Klikk på beløpene og skriv nye tall rett inn. Fordel det som er igjen til mål.
 3. Overfør pengene i nettbanken og kryss av linjene.
-4. *Avslutt måned*: sparingen bokføres på målene og kontoen, og formuen lagres i historikken.
-5. Kontoer → *Oppdater saldoer* med tallene fra banken. Renter og avvik dukker opp som «ikke fordelt» og kan fordeles.
+4. *Avslutt måned*: velg hvor mye som skal legges til på hvert mål. Formuen lagres i historikken.
+5. Kontoer: klikk på saldoen og skriv inn tallet fra banken. Renter og avvik dukker opp som «ikke fordelt» og kan fordeles.
 
 Når pengene brukes, for eksempel når bilen kjøpes: Sparemål → Bil → *Sett inn / ta ut* → negativt beløp, «penger ut av kontoen».
 
